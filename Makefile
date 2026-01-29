@@ -1,24 +1,54 @@
 # OctoCAT Supply Chain Management - Makefile
 # Supports both template (api-nodejs, api-python) and promoted (api) folder structures within actually rendered repositories for easier startup.
+# Cross-platform compatible (Linux, macOS, Windows with Git Bash or WSL)
+
+# Detect OS for platform-specific commands
+ifeq ($(OS),Windows_NT)
+    DETECTED_OS := Windows
+    # Use PowerShell-compatible commands on Windows
+    RM_RF = powershell -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+    MKDIR_P = powershell -Command "New-Item -ItemType Directory -Force -Path"
+else
+    DETECTED_OS := $(shell uname -s)
+    RM_RF = rm -rf
+    MKDIR_P = mkdir -p
+endif
 
 # Allow overriding backend via environment variable (e.g., BACKEND=python make dev)
-BACKEND ?= $(shell \
-	if [ -d "api" ]; then \
-		if [ -f "api/package.json" ]; then echo "nodejs"; \
-		elif [ -f "api/pyproject.toml" ]; then echo "python"; \
-		else echo "unknown"; fi \
-	elif [ -d "api-nodejs" ] && [ -d "api-python" ]; then echo "nodejs"; \
-	elif [ -d "api-nodejs" ]; then echo "nodejs"; \
-	elif [ -d "api-python" ]; then echo "python"; \
-	else echo "unknown"; fi \
-)
+# Uses Make's wildcard function for cross-platform file/directory detection
+_API_EXISTS := $(wildcard api/)
+_API_PACKAGE_JSON := $(wildcard api/package.json)
+_API_PYPROJECT := $(wildcard api/pyproject.toml)
+_API_NODEJS_EXISTS := $(wildcard api-nodejs/)
+_API_PYTHON_EXISTS := $(wildcard api-python/)
+
+# Determine backend type
+ifdef _API_EXISTS
+    ifneq ($(_API_PACKAGE_JSON),)
+        _DETECTED_BACKEND := nodejs
+    else ifneq ($(_API_PYPROJECT),)
+        _DETECTED_BACKEND := python
+    else
+        _DETECTED_BACKEND := unknown
+    endif
+else ifneq ($(_API_NODEJS_EXISTS),)
+    _DETECTED_BACKEND := nodejs
+else ifneq ($(_API_PYTHON_EXISTS),)
+    _DETECTED_BACKEND := python
+else
+    _DETECTED_BACKEND := unknown
+endif
+
+BACKEND ?= $(_DETECTED_BACKEND)
 
 # Determine API directory (template vs promoted)
-API_DIR := $(shell \
-	if [ -d "api" ]; then echo "api"; \
-	elif [ -d "api-$(BACKEND)" ]; then echo "api-$(BACKEND)"; \
-	else echo "api"; fi \
-)
+ifdef _API_EXISTS
+    API_DIR := api
+else ifneq ($(wildcard api-$(BACKEND)/),)
+    API_DIR := api-$(BACKEND)
+else
+    API_DIR := api
+endif
 
 FRONTEND_DIR := frontend
 
@@ -32,6 +62,7 @@ help: ## Display this help message
 
 .PHONY: info
 info: ## Show detected backend and directories
+	@echo "Detected OS:      $(DETECTED_OS)"
 	@echo "Detected Backend: $(BACKEND)"
 	@echo "API Directory:    $(API_DIR)"
 	@echo "Frontend Directory: $(FRONTEND_DIR)"
@@ -58,17 +89,24 @@ endif
 dev: ## Start development servers (API + Frontend)
 	@echo "Starting development environment with $(BACKEND) backend..."
 ifeq ($(BACKEND),nodejs)
-	@cd $(API_DIR)
+ifeq ($(OS),Windows_NT)
+	npx concurrently --kill-others "cd $(API_DIR) && npm run dev" "cd $(FRONTEND_DIR) && set VITE_API_URL=http://localhost:3000 && npm run dev"
+else
 	@trap 'kill 0' INT; \
 	(cd $(API_DIR) && npm run dev) & \
 	(cd $(FRONTEND_DIR) && VITE_API_URL=http://localhost:3000 npm run dev) & \
 	wait
+endif
 else ifeq ($(BACKEND),python)
 	@$(MAKE) -C $(API_DIR) db-seed
+ifeq ($(OS),Windows_NT)
+	npx concurrently --kill-others "cd $(API_DIR) && $(MAKE) dev" "cd $(FRONTEND_DIR) && set VITE_API_URL=http://localhost:3000 && npm run dev"
+else
 	@trap 'kill 0' INT; \
 	(cd $(API_DIR) && $(MAKE) dev) & \
 	(cd $(FRONTEND_DIR) && VITE_API_URL=http://localhost:3000 npm run dev) & \
 	wait
+endif
 else
 	@echo "Error: Unknown backend '$(BACKEND)'"
 	@exit 1
@@ -280,14 +318,23 @@ docker-down: ## Stop Docker containers
 clean: ## Clean build artifacts and dependencies
 	@echo "Cleaning build artifacts..."
 ifeq ($(BACKEND),nodejs)
-	rm -rf node_modules $(API_DIR)/node_modules $(FRONTEND_DIR)/node_modules
-	rm -rf $(API_DIR)/dist $(FRONTEND_DIR)/dist
+	$(RM_RF) node_modules $(API_DIR)/node_modules $(FRONTEND_DIR)/node_modules
+	$(RM_RF) $(API_DIR)/dist $(FRONTEND_DIR)/dist
 else ifeq ($(BACKEND),python)
-	rm -rf $(API_DIR)/.venv $(API_DIR)/__pycache__ $(API_DIR)/src/__pycache__
-	rm -rf $(API_DIR)/.pytest_cache $(API_DIR)/htmlcov $(API_DIR)/.coverage
-	rm -rf $(FRONTEND_DIR)/node_modules $(FRONTEND_DIR)/dist
+	$(RM_RF) $(API_DIR)/.venv $(API_DIR)/__pycache__ $(API_DIR)/src/__pycache__
+	$(RM_RF) $(API_DIR)/.pytest_cache $(API_DIR)/htmlcov $(API_DIR)/.coverage
+	$(RM_RF) $(FRONTEND_DIR)/node_modules $(FRONTEND_DIR)/dist
 else
 	@echo "Cleaning common artifacts..."
-	rm -rf */node_modules */dist */__pycache__ */.venv
+ifeq ($(OS),Windows_NT)
+	$(RM_RF) node_modules,api/node_modules,api-nodejs/node_modules,api-python/.venv,frontend/node_modules
+	$(RM_RF) api/dist,api-nodejs/dist,frontend/dist
+else
+	$(RM_RF) */node_modules */dist */__pycache__ */.venv
 endif
-	rm -rf $(API_DIR)/*.db $(API_DIR)/*.db-*
+endif
+ifeq ($(OS),Windows_NT)
+	$(RM_RF) $(API_DIR)/*.db,$(API_DIR)/*.db-*
+else
+	$(RM_RF) $(API_DIR)/*.db $(API_DIR)/*.db-*
+endif

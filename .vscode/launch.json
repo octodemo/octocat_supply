@@ -4,11 +4,35 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Start API & Frontend",
-            "cwd": "${workspaceFolder}",
+            "name": "Debug API",
+            "cwd": "${workspaceFolder}/api",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run", "dev"],
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "serverReadyAction": {
+                "pattern": "listening on port ([0-9]+)",
+                "uriFormat": "http://localhost:%s",
+                "action": "debugWithChrome"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Start Frontend",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
+            "console": "integratedTerminal",
+            "env": {
+                "VITE_API_URL": "http://localhost:3000"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Start API & Frontend",
+            "configurations": ["Debug API", "Start Frontend"],
+            "stopAll": true
         }
     ]
 }
