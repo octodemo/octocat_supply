@@ -9,11 +9,6 @@
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run", "dev"],
             "console": "integratedTerminal",
-            "serverReadyAction": {
-                "pattern": "listening on port ([0-9]+)",
-                "uriFormat": "http://localhost:%s",
-                "action": "debugWithChrome"
-            }
         },
         {
             "type": "node",
@@ -25,6 +20,11 @@
             "console": "integratedTerminal",
             "env": {
                 "VITE_API_URL": "http://localhost:3000"
+            },
+            "serverReadyAction": {
+                "pattern": "Local:\\s+http://localhost:([0-9]+)",
+                "uriFormat": "http://localhost:%s",
+                "action": "openExternally"
             }
         }
     ],
@@ -32,7 +32,10 @@
         {
             "name": "Start API & Frontend",
             "configurations": ["Debug API", "Start Frontend"],
-            "stopAll": true
+            "stopAll": true,
+            "presentation": {
+                "order": 1
+            }
         }
     ]
 }
