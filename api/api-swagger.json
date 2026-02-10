@@ -316,6 +316,82 @@
                 }
             }
         },
+        "/api/deliveries/{id}/status": {
+            "put": {
+                "summary": "Update the status of a delivery",
+                "tags": [
+                    "Deliveries"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Delivery ID"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "description": "The new status of the delivery"
+                                    },
+                                    "deliveryPartner": {
+                                        "type": "string",
+                                        "description": "Optional delivery partner to notify via the notify-service about the status update"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Delivery status updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Delivery"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "delivery": {
+                                                    "$ref": "#/components/schemas/Delivery"
+                                                },
+                                                "commandOutput": {
+                                                    "type": "string",
+                                                    "description": "Output from the notify-service command"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Delivery not found"
+                    },
+                    "500": {
+                        "description": "Error executing notify command"
+                    }
+                }
+            }
+        },
         "/api/headquarters": {
             "get": {
                 "summary": "Returns all headquarters",
@@ -461,6 +537,94 @@
                 "responses": {
                     "204": {
                         "description": "Headquarters deleted successfully"
+                    },
+                    "404": {
+                        "description": "Headquarters not found"
+                    }
+                }
+            }
+        },
+        "/api/headquarters/{id}/metrics": {
+            "get": {
+                "summary": "Get headquarters metrics by ID",
+                "tags": [
+                    "Headquarters"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Headquarters ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Headquarters metrics calculated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "score": {
+                                            "type": "number",
+                                            "description": "Total score calculated from ID, floor count, and capacity"
+                                        },
+                                        "average": {
+                                            "type": "number",
+                                            "description": "Average value"
+                                        },
+                                        "display": {
+                                            "type": "string",
+                                            "description": "Display text"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Headquarters not found"
+                    }
+                }
+            }
+        },
+        "/api/headquarters/{id}/label": {
+            "get": {
+                "summary": "Get headquarters label by ID",
+                "tags": [
+                    "Headquarters"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Headquarters ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Headquarters label created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "label": {
+                                            "type": "string",
+                                            "description": "Formatted location label"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Headquarters not found"
@@ -1227,6 +1391,50 @@
                     }
                 }
             }
+        },
+        "/api/suppliers/{id}/status": {
+            "get": {
+                "summary": "Get the status of a supplier",
+                "tags": [
+                    "Suppliers"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Supplier ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supplier status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "INACTIVE",
+                                                "APPROVED",
+                                                "PENDING"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1259,6 +1467,14 @@
                         "type": "string",
                         "description": "Contact phone number for the branch"
                     },
+                    "description": {
+                        "type": "string",
+                        "description": "Additional details about the branch"
+                    },
+                    "contactPerson": {
+                        "type": "string",
+                        "description": "Name of the primary contact person"
+                    },
                     "email": {
                         "type": "string",
                         "format": "email",
@@ -1270,7 +1486,7 @@
                 "type": "object",
                 "required": [
                     "deliveryId",
-                    "orderId",
+                    "supplierId",
                     "status"
                 ],
                 "properties": {
@@ -1278,33 +1494,25 @@
                         "type": "integer",
                         "description": "The unique identifier for the delivery"
                     },
-                    "orderId": {
+                    "supplierId": {
                         "type": "integer",
-                        "description": "The ID of the order being delivered"
+                        "description": "The ID of the supplier for this delivery"
+                    },
+                    "deliveryDate": {
+                        "type": "string",
+                        "description": "The date of the delivery"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the delivery"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Additional details about the delivery"
                     },
                     "status": {
                         "type": "string",
-                        "description": "Current status of the delivery",
-                        "enum": [
-                            "pending",
-                            "in-transit",
-                            "delivered",
-                            "failed"
-                        ]
-                    },
-                    "scheduledDate": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Scheduled delivery date and time"
-                    },
-                    "actualDeliveryDate": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Actual delivery date and time"
-                    },
-                    "notes": {
-                        "type": "string",
-                        "description": "Additional notes about the delivery"
+                        "description": "Current status of the delivery"
                     }
                 }
             },
@@ -1331,14 +1539,34 @@
                         "type": "string",
                         "description": "Contact phone number for the headquarters"
                     },
+                    "description": {
+                        "type": "string",
+                        "description": "Additional details about the headquarters"
+                    },
+                    "contactPerson": {
+                        "type": "string",
+                        "description": "Name of the primary contact person"
+                    },
                     "email": {
                         "type": "string",
                         "format": "email",
                         "description": "Contact email for the headquarters"
                     },
-                    "description": {
+                    "city": {
                         "type": "string",
-                        "description": "Additional details about the headquarters"
+                        "description": "City where the headquarters is located"
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": "Country where the headquarters is located"
+                    },
+                    "floorCount": {
+                        "type": "integer",
+                        "description": "Number of floors in the headquarters building"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "description": "Total capacity of the headquarters"
                     }
                 }
             },
@@ -1363,6 +1591,14 @@
                         "format": "date-time",
                         "description": "The date and time when the order was placed"
                     },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the order"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Additional details about the order"
+                    },
                     "status": {
                         "type": "string",
                         "description": "The current status of the order",
@@ -1373,11 +1609,6 @@
                             "delivered",
                             "cancelled"
                         ]
-                    },
-                    "totalAmount": {
-                        "type": "number",
-                        "format": "float",
-                        "description": "The total amount of the order"
                     }
                 }
             },
@@ -1452,13 +1683,20 @@
                 "type": "object",
                 "required": [
                     "productId",
+                    "supplierId",
                     "name",
-                    "price"
+                    "price",
+                    "sku",
+                    "unit"
                 ],
                 "properties": {
                     "productId": {
                         "type": "integer",
                         "description": "The unique identifier for the product"
+                    },
+                    "supplierId": {
+                        "type": "integer",
+                        "description": "The ID of the supplier providing this product"
                     },
                     "name": {
                         "type": "string",
@@ -1473,13 +1711,22 @@
                         "format": "float",
                         "description": "The current price of the product"
                     },
-                    "supplierId": {
-                        "type": "integer",
-                        "description": "The ID of the supplier providing this product"
+                    "sku": {
+                        "type": "string",
+                        "description": "Stock keeping unit code for the product"
                     },
-                    "stockLevel": {
-                        "type": "integer",
-                        "description": "Current stock level of the product"
+                    "unit": {
+                        "type": "string",
+                        "description": "Unit of measure for the product (e.g., \"piece\")"
+                    },
+                    "imgName": {
+                        "type": "string",
+                        "description": "Filename of the product image"
+                    },
+                    "discount": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "Discount percentage (if applicable) expressed as a decimal (e.g., 0.25 for 25%)"
                     }
                 }
             },
@@ -1498,10 +1745,6 @@
                         "type": "string",
                         "description": "The name of the supplier"
                     },
-                    "address": {
-                        "type": "string",
-                        "description": "The physical address of the supplier"
-                    },
                     "contactPerson": {
                         "type": "string",
                         "description": "Name of the primary contact person"
@@ -1518,6 +1761,14 @@
                     "description": {
                         "type": "string",
                         "description": "Additional details about the supplier"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "description": "Whether the supplier is active"
+                    },
+                    "verified": {
+                        "type": "boolean",
+                        "description": "Whether the supplier is verified"
                     }
                 }
             }

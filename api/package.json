@@ -15,7 +15,8 @@
 		"db:init:dev": "tsx src/init-db.ts",
 		"db:seed": "npm run db:init -- --seed",
 		"db:seed:dev": "npm run db:init:dev -- --seed",
-		"db:migrate": "node dist/init-db.js"
+		"db:migrate": "node dist/init-db.js",
+		"swagger:generate": "tsx src/generate-swagger.ts"
 	},
 	"dependencies": {
 		"@types/cors": "^2.8.19",

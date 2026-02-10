@@ -14,9 +14,6 @@
  *         name:
  *           type: string
  *           description: The name of the supplier
- *         address:
- *           type: string
- *           description: The physical address of the supplier
  *         contactPerson:
  *           type: string
  *           description: Name of the primary contact person

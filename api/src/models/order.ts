@@ -19,14 +19,16 @@
  *           type: string
  *           format: date-time
  *           description: The date and time when the order was placed
+ *         name:
+ *           type: string
+ *           description: The name of the order
+ *         description:
+ *           type: string
+ *           description: Additional details about the order
  *         status:
  *           type: string
  *           description: The current status of the order
  *           enum: [pending, processing, shipped, delivered, cancelled]
- *         totalAmount:
- *           type: number
- *           format: float
- *           description: The total amount of the order
  */
 export interface Order {
   orderId: number;

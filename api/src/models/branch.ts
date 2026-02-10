@@ -24,6 +24,12 @@
  *         phone:
  *           type: string
  *           description: Contact phone number for the branch
+ *         description:
+ *           type: string
+ *           description: Additional details about the branch
+ *         contactPerson:
+ *           type: string
+ *           description: Name of the primary contact person
  *         email:
  *           type: string
  *           format: email

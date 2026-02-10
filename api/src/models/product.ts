@@ -6,12 +6,18 @@
  *       type: object
  *       required:
  *         - productId
+ *         - supplierId
  *         - name
  *         - price
+ *         - sku
+ *         - unit
  *       properties:
  *         productId:
  *           type: integer
  *           description: The unique identifier for the product
+ *         supplierId:
+ *           type: integer
+ *           description: The ID of the supplier providing this product
  *         name:
  *           type: string
  *           description: The name of the product
@@ -22,12 +28,15 @@
  *           type: number
  *           format: float
  *           description: The current price of the product
- *         supplierId:
- *           type: integer
- *           description: The ID of the supplier providing this product
- *         stockLevel:
- *           type: integer
- *           description: Current stock level of the product
+ *         sku:
+ *           type: string
+ *           description: Stock keeping unit code for the product
+ *         unit:
+ *           type: string
+ *           description: Unit of measure for the product (e.g., "piece")
+ *         imgName:
+ *           type: string
+ *           description: Filename of the product image
  *         discount:
  *           type: number
  *           format: float

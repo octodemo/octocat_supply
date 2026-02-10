@@ -20,13 +20,16 @@
  *         phone:
  *           type: string
  *           description: Contact phone number for the headquarters
+ *         description:
+ *           type: string
+ *           description: Additional details about the headquarters
+ *         contactPerson:
+ *           type: string
+ *           description: Name of the primary contact person
  *         email:
  *           type: string
  *           format: email
  *           description: Contact email for the headquarters
- *         description:
- *           type: string
- *           description: Additional details about the headquarters
  *         city:
  *           type: string
  *           description: City where the headquarters is located
