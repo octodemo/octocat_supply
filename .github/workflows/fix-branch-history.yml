@@ -1,0 +1,86 @@
+# .github/workflows/fix-branch-history.yml
+#
+# One-time workflow for repos created from a template.
+#
+# GitHub template repos create each branch with an independent initial commit,
+# so branches have no shared history and PRs between them are impossible.
+# This workflow fixes that by recreating every non-main branch as a fork of
+# main, preserving the file differences as a single commit. After running,
+# all branches share a common ancestor and PRs work normally.
+#
+# On the template repo itself (octodemo/octocat_supply) this workflow
+# is skipped. On any repo created from the template it runs once on the first
+# push to main, then deletes itself.
+
+name: Fix Template Branch History
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  rebase-branches:
+    if: github.repository != 'octodemo/octocat_supply'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout full repo with all branches
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Graft all branches onto main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BASE_BRANCH="main"
+
+          branches=$(git branch -r | grep -v HEAD | grep -v "origin/${BASE_BRANCH}$" | sed 's|origin/||' | xargs)
+
+          if [ -z "$branches" ]; then
+            echo "No additional branches found. Nothing to do."
+            exit 0
+          fi
+
+          echo "Branches to graft onto ${BASE_BRANCH}: ${branches}"
+
+          for branch in $branches; do
+            echo "----------------------------------------"
+            echo "Grafting '${branch}' onto '${BASE_BRANCH}'..."
+
+            # Create a new branch from main
+            git checkout "$BASE_BRANCH"
+            git branch -D "$branch" 2>/dev/null || true
+            git checkout -b "$branch"
+
+            # Apply the tree state from the original remote branch
+            git checkout "origin/$branch" -- .
+
+            # Check if there are actual differences
+            if git diff --cached --quiet && git diff --quiet; then
+              echo "No differences between '${branch}' and '${BASE_BRANCH}'. Skipping."
+              git push --force origin "$branch"
+              continue
+            fi
+
+            # Commit the differences
+            git add -A
+            git commit -m "feat: changes from ${branch}" --allow-empty
+
+            echo "Force-pushing '${branch}'..."
+            git push --force origin "$branch"
+          done
+
+          echo "Done. All branches now share history with '${BASE_BRANCH}'."
+
+      - name: Delete this workflow (self-cleanup)
+        run: |
+          git checkout main
+          git pull origin main
+          if [ -f ".github/workflows/fix-branch-history.yml" ]; then
+            git rm .github/workflows/fix-branch-history.yml
+            git commit -m "chore: remove one-time branch history fix workflow"
+            git push origin main
+          fi
