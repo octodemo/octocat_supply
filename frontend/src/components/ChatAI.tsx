@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import axios from 'axios';
 
 interface Product {
   productId: number;
@@ -15,10 +16,9 @@ interface Product {
 
 interface ChatAIProps {
   products: Product[];
-  onFilter: (filtered: Product[]) => void;
 }
 
-export default function ChatAI({ products, onFilter }: ChatAIProps) {
+export default function ChatAI({ products }: ChatAIProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Array<{text: string, isUser: boolean}>>([
     { text: "Hi! I'm your AI assistant. Ask me about products you'd like to see, like 'show me cat feeders' or 'recommend toys for kittens'.", isUser: false }
@@ -26,74 +26,26 @@ export default function ChatAI({ products, onFilter }: ChatAIProps) {
   const [input, setInput] = useState('');
   const { darkMode } = useTheme();
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const userMessage = { text: input, isUser: true };
     setMessages(prev => [...prev, userMessage]);
 
-    // Enhanced AI logic - better keyword matching and responses
-    const query = input.toLowerCase();
-    let response = "I can help you find feeders, toys, food, or budget options. Try asking 'show me cat feeders'!";
-    let filteredProducts: Product[] = [];
+    try {
+      const response = await axios.post('/api/chat', {
+        message: input,
+        products: products
+      });
 
-    // Clear filter if asked
-    if (query.includes('all') || query.includes('show all') || query.includes('clear')) {
-      filteredProducts = products;
-      response = `Showing all ${products.length} products.`;
+      const aiResponse = response.data.response;
+      const aiMessage = { text: aiResponse, isUser: false };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage = { text: 'Sorry, I\'m having trouble connecting. Please try again.', isUser: false };
+      setMessages(prev => [...prev, errorMessage]);
     }
-    // Feeders and food
-    else if (query.includes('feeder') || query.includes('food') || query.includes('feed')) {
-      filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes('feeder') ||
-        p.description.toLowerCase().includes('feed') ||
-        p.description.toLowerCase().includes('food')
-      );
-      response = filteredProducts.length > 0
-        ? `Found ${filteredProducts.length} feeder/food products: ${filteredProducts.map(p => p.name).join(', ')}`
-        : "No feeder or food products found.";
-    }
-    // Toys and play
-    else if (query.includes('toy') || query.includes('play') || query.includes('fun')) {
-      filteredProducts = products.filter(p =>
-        p.description.toLowerCase().includes('toy') ||
-        p.description.toLowerCase().includes('play') ||
-        p.name.toLowerCase().includes('toy')
-      );
-      response = filteredProducts.length > 0
-        ? `Here are ${filteredProducts.length} fun toys: ${filteredProducts.map(p => p.name).join(', ')}`
-        : "No toys found.";
-    }
-    // Budget/cheap
-    else if (query.includes('cheap') || query.includes('budget') || query.includes('affordable') || query.includes('low price')) {
-      filteredProducts = products.filter(p => p.price < 50).sort((a, b) => a.price - b.price);
-      response = filteredProducts.length > 0
-        ? `Budget options under $50: ${filteredProducts.map(p => `${p.name} ($${p.price})`).join(', ')}`
-        : "No budget products found.";
-    }
-    // Premium/expensive
-    else if (query.includes('expensive') || query.includes('premium') || query.includes('luxury') || query.includes('high end')) {
-      filteredProducts = products.filter(p => p.price > 100).sort((a, b) => b.price - a.price);
-      response = filteredProducts.length > 0
-        ? `Premium products: ${filteredProducts.map(p => `${p.name} ($${p.price})`).join(', ')}`
-        : "No premium products found.";
-    }
-    // Search by name or description
-    else {
-      filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
-      );
-      response = filteredProducts.length > 0
-        ? `Found ${filteredProducts.length} products matching "${input}": ${filteredProducts.map(p => p.name).join(', ')}`
-        : `No products found for "${input}". Try different keywords!`;
-    }
-
-    onFilter(filteredProducts.length > 0 ? filteredProducts : null);
-
-    const aiMessage = { text: response, isUser: false };
-    setMessages(prev => [...prev, aiMessage]);
-    setInput('');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
