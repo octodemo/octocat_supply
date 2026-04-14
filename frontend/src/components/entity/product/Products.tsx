@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useDeferredValue } from 'react';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
@@ -16,31 +16,61 @@ interface Product {
   discount?: number;
 }
 
-const fetchProducts = async (): Promise<Product[]> => {
-  const { data } = await axios.get(`${api.baseURL}${api.endpoints.products}`);
+type SortOption = 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc' | '';
+
+interface SearchParams {
+  q: string;
+  minPrice: string;
+  maxPrice: string;
+  sortBy: SortOption;
+}
+
+const fetchFilteredProducts = async (params: SearchParams): Promise<Product[]> => {
+  const query = new URLSearchParams();
+  if (params.q) query.set('q', params.q);
+  if (params.minPrice) query.set('minPrice', params.minPrice);
+  if (params.maxPrice) query.set('maxPrice', params.maxPrice);
+  if (params.sortBy) query.set('sortBy', params.sortBy);
+
+  const queryString = query.toString();
+  const url = queryString
+    ? `${api.baseURL}${api.endpoints.productsSearch}?${queryString}`
+    : `${api.baseURL}${api.endpoints.products}`;
+
+  const { data } = await axios.get(url);
   return data;
 };
 
 export default function Products() {
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const { data: products, isLoading, error } = useQuery('products', fetchProducts);
+  const [showFilters, setShowFilters] = useState(false);
   const { darkMode } = useTheme();
 
-  const filteredProducts = products?.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase()),
+  const deferredSearch = useDeferredValue(searchTerm);
+  const deferredMinPrice = useDeferredValue(minPrice);
+  const deferredMaxPrice = useDeferredValue(maxPrice);
+
+  const searchParams: SearchParams = {
+    q: deferredSearch,
+    minPrice: deferredMinPrice,
+    maxPrice: deferredMaxPrice,
+    sortBy,
+  };
+
+  const { data: filteredProducts, isLoading, error } = useQuery(
+    ['products', searchParams],
+    () => fetchFilteredProducts(searchParams),
   );
 
-  // Inconsistent loop direction example: process products in reverse incorrectly
-  if (filteredProducts && filteredProducts.length === 0) {
-    for (let i = filteredProducts.length - 1; i > 5; ++i) {
-      filteredProducts[i].discount = 0;
-    }
-  }
+  const isStale = searchTerm !== deferredSearch || minPrice !== deferredMinPrice || maxPrice !== deferredMaxPrice;
+
+  const hasActiveFilters = minPrice !== '' || maxPrice !== '' || sortBy !== '';
 
   const handleQuantityChange = (productId: number, change: number) => {
     setQuantities((prev) => ({
@@ -104,26 +134,110 @@ export default function Products() {
             Products
           </h1>
 
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-800 text-light border-gray-700' : 'bg-white text-gray-800 border-gray-300'} rounded-lg border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-300`}
-              aria-label="Search products"
-            />
-            <svg
-              className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="relative flex-grow">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-800 text-light border-gray-700' : 'bg-white text-gray-800 border-gray-300'} rounded-lg border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-300`}
+                  aria-label="Search products"
+                />
+                <svg
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-4 py-2 rounded-lg border transition-colors duration-300 flex items-center gap-2 ${
+                  showFilters || hasActiveFilters
+                    ? 'bg-primary text-white border-primary'
+                    : darkMode
+                      ? 'bg-gray-800 text-light border-gray-700 hover:border-primary'
+                      : 'bg-white text-gray-800 border-gray-300 hover:border-primary'
+                }`}
+                aria-label="Toggle filters"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+                {hasActiveFilters && (
+                  <span className="bg-white text-primary text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    !
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {showFilters && (
+              <div className={`flex flex-wrap gap-4 p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} transition-colors duration-300`}>
+                <div className="flex items-center gap-2">
+                  <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Price:</label>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    className={`w-24 px-3 py-1.5 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-300'} focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none`}
+                    min="0"
+                    aria-label="Minimum price"
+                  />
+                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>-</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    className={`w-24 px-3 py-1.5 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-300'} focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none`}
+                    min="0"
+                    aria-label="Maximum price"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Sort:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className={`px-3 py-1.5 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-300'} focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none`}
+                    aria-label="Sort products"
+                  >
+                    <option value="">Default</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="name_asc">Name: A to Z</option>
+                    <option value="name_desc">Name: Z to A</option>
+                  </select>
+                </div>
+
+                {hasActiveFilters && (
+                  <button
+                    onClick={() => { setMinPrice(''); setMaxPrice(''); setSortBy(''); }}
+                    className="px-3 py-1.5 text-sm text-primary hover:text-accent transition-colors"
+                    aria-label="Clear all filters"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            )}
+
+            {isStale && (
+              <div className="h-1 w-full overflow-hidden rounded-full bg-gray-200">
+                <div className="h-full bg-primary animate-pulse rounded-full w-2/3"></div>
+              </div>
+            )}
           </div>
 
           {/* Empty state when no products match */}
