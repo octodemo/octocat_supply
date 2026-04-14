@@ -42,5 +42,7 @@ export const api = {
     deliveries: '/api/deliveries',
     orderDetails: '/api/order-details',
     orderDetailDeliveries: '/api/order-detail-deliveries',
+    chessDaily: '/api/chess/daily',
+    chessPlayerStats: (username: string) => `/api/chess/player/${encodeURIComponent(username)}/stats`,
   },
 };
