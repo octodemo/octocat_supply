@@ -38,6 +38,28 @@ Do not inline full API route or component files in review feedback unless absolu
 6. Style / minor formatting
 
 ## Tone & Feedback Style
+## Agent Orchestration & Tooling
+
+This project uses multiple agents and tools:
+- **GitHub Copilot**: Code suggestions, refactoring, and documentation.
+- **Claude**: Advanced code review, documentation generation, and natural language tasks.
+- **Playwright**: End-to-end frontend testing (see PLAYWRIGHT.md).
+- **Context7**: Contextual code analysis and search (see CONTEXT7.md).
+- **Atlassian MCP**: Issue and project management integration (see ATLASSIAN_MCP.md).
+
+### Commit Message Style
+- Use Conventional Commits (feat, fix, chore, docs, refactor, test, etc.)
+- Reference issues when relevant
+- Keep subject under 72 characters
+- Use imperative mood
+See COMMIT_STYLE.md for details and examples.
+
+### Agent Guidelines
+- Prefer Copilot for code generation
+- Prefer Claude for documentation and review
+- Use Playwright for all frontend E2E tests
+- Use Context7 for codebase search
+- Use Atlassian MCP for project management
 Be concise, actionable, and cite a rationale ("because" clause) for non-trivial recommendations. Offer one preferred solution; optionally a lightweight alternative.
 
 ---

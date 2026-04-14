@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import { ReviewSummaryBadge, ReviewList } from './ProductReviews';
 
 interface Product {
   productId: number;
@@ -184,6 +185,7 @@ export default function Products() {
                   >
                     {product.name}
                   </h3>
+                  <ReviewSummaryBadge productId={product.productId} />
                   <p
                     className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4 flex-grow transition-colors duration-300`}
                   >
@@ -301,6 +303,7 @@ export default function Products() {
             >
               {selectedProduct.description}
             </p>
+            <ReviewList productId={selectedProduct.productId} />
           </div>
         </div>
       )}
