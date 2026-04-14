@@ -17,6 +17,18 @@ export const DB_CONFIG = {
 
   // Enable foreign key constraints
   FOREIGN_KEYS: process.env.DB_FOREIGN_KEYS !== 'false',
+
+  // Chess.com Published Data API base URL
+  CHESS_API_URL: process.env.CHESS_API_URL || 'https://api.chess.com/pub',
+
+  // Timeout for Chess.com HTTP calls in ms
+  CHESS_TIMEOUT_MS: parseInt(process.env.CHESS_TIMEOUT_MS || '5000', 10),
+
+  // Daily puzzle cache TTL in ms
+  CHESS_DAILY_TTL_MS: parseInt(process.env.CHESS_DAILY_TTL_MS || '3600000', 10),
+
+  // Player stats cache TTL in ms
+  CHESS_PLAYER_STATS_TTL_MS: parseInt(process.env.CHESS_PLAYER_STATS_TTL_MS || '600000', 10),
 };
 
 // Test database configuration for unit tests

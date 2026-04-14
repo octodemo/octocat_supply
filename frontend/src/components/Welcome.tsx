@@ -90,6 +90,39 @@ export default function Welcome() {
           </div>
         </div>
 
+        <section
+          className={`max-w-7xl mx-auto mt-8 mb-10 rounded-2xl overflow-hidden border ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'} shadow-lg`}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-3">
+            <div className="lg:col-span-2 p-6 sm:p-8">
+              <p className="text-sm uppercase tracking-widest text-primary font-semibold mb-2">
+                New Feature
+              </p>
+              <h2 className="text-3xl font-bold mb-3">Daily Chess Challenge</h2>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-5`}>
+                Rozwiaz codzienne zadanie z Chess.com, wykonaj sekwencje najlepszych ruchow i
+                sprawdz statystyki ulubionego gracza.
+              </p>
+              <button
+                onClick={() => navigate('/chess/daily')}
+                className="bg-primary hover:bg-accent text-white px-6 py-3 rounded-md font-medium transition-colors"
+              >
+                Przejdz do wyzwania
+              </button>
+            </div>
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-green-100 to-white'} p-6 sm:p-8 flex items-center`}>
+              <div>
+                <p className="text-sm font-semibold mb-2">Co dostajesz?</p>
+                <ul className="text-sm space-y-2">
+                  <li>Interaktywna szachownica z walidacja ruchow</li>
+                  <li>Import pozycji FEN i linii PGN</li>
+                  <li>Panel rapid, blitz i bullet dla gracza</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Partner Logos */}
         <div className={`py-2 mt-0 max-w-7xl mx-auto ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           <div className="flex flex-wrap items-center">

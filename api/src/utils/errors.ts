@@ -36,6 +36,13 @@ export class ConflictError extends DatabaseError {
   }
 }
 
+export class ExternalServiceError extends DatabaseError {
+  constructor(message: string) {
+    super(`External service error: ${message}`, 'EXTERNAL_SERVICE_ERROR', 503);
+    this.name = 'ExternalServiceError';
+  }
+}
+
 /**
  * Handle database errors and convert SQLite-specific errors to appropriate types
  */
