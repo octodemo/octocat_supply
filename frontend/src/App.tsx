@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { CopilotKit } from '@copilotkit/react-core';
+import { CopilotPopup } from '@copilotkit/react-ui';
+import '@copilotkit/react-ui/styles.css';
 import Navigation from './components/Navigation';
 import Welcome from './components/Welcome';
 import About from './components/About';
@@ -9,6 +12,8 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AdminProducts from './components/admin/AdminProducts';
 import { useTheme } from './context/ThemeContext';
+import { COPILOT_RUNTIME_URL } from './api/config';
+import CopilotActions from './components/copilot/CopilotActions';
 
 // Wrapper component to apply theme classes
 function ThemedApp() {
@@ -37,11 +42,21 @@ function ThemedApp() {
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <ThemedApp />
-      </ThemeProvider>
-    </AuthProvider>
+    <CopilotKit runtimeUrl={COPILOT_RUNTIME_URL}>
+      <AuthProvider>
+        <ThemeProvider>
+          <ThemedApp />
+        </ThemeProvider>
+      </AuthProvider>
+      <CopilotActions />
+      <CopilotPopup
+        labels={{
+          title: 'OctoCAT Assistant',
+          initial: "Hi! I'm your OctoCAT Supply assistant 🐱 Ask me to show product prices, compare suppliers, find deals, or track orders — I'll show you interactive visuals right here in chat!",
+        }}
+        defaultOpen={false}
+      />
+    </CopilotKit>
   );
 }
 
