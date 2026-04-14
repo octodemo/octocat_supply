@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import ChatAI from '../../ChatAI';
+import { useCart } from '../../../context/CartContext';
 
 interface Product {
   productId: number;
@@ -22,12 +24,12 @@ const fetchProducts = async (): Promise<Product[]> => {
 };
 
 export default function Products() {
-  const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
   const { data: products, isLoading, error } = useQuery('products', fetchProducts);
   const { darkMode } = useTheme();
+  const { addItem } = useCart();
 
   const filteredProducts = products?.filter(
     (product) =>
@@ -42,23 +44,8 @@ export default function Products() {
     }
   }
 
-  const handleQuantityChange = (productId: number, change: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: Math.max(0, (prev[productId] || 0) + change),
-    }));
-  };
-
-  const handleAddToCart = (productId: number) => {
-    const quantity = quantities[productId] || 0;
-    if (quantity > 0) {
-      // TODO: Implement cart functionality
-      alert(`Added ${quantity} items to cart`);
-      setQuantities((prev) => ({
-        ...prev,
-        [productId]: 0,
-      }));
-    }
+  const handleAddToCart = (product: Product) => {
+    addItem(product);
   };
 
   const handleProductClick = (product: Product) => {
@@ -208,42 +195,10 @@ export default function Products() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div
-                        className={`flex items-center space-x-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg p-1 transition-colors duration-300`}
-                      >
-                        <button
-                          onClick={() => handleQuantityChange(product.productId, -1)}
-                          className={`w-8 h-8 flex items-center justify-center ${darkMode ? 'text-light' : 'text-gray-700'} hover:text-primary transition-colors duration-300`}
-                          aria-label={`Decrease quantity of ${product.name}`}
-                          id={`decrease-qty-${product.productId}`}
-                        >
-                          <span aria-hidden="true">-</span>
-                        </button>
-                        <span
-                          className={`${darkMode ? 'text-light' : 'text-gray-800'} min-w-[2rem] text-center transition-colors duration-300`}
-                          aria-label={`Quantity of ${product.name}`}
-                          id={`qty-${product.productId}`}
-                        >
-                          {quantities[product.productId] || 0}
-                        </span>
-                        <button
-                          onClick={() => handleQuantityChange(product.productId, 1)}
-                          className={`w-8 h-8 flex items-center justify-center ${darkMode ? 'text-light' : 'text-gray-700'} hover:text-primary transition-colors duration-300`}
-                          aria-label={`Increase quantity of ${product.name}`}
-                          id={`increase-qty-${product.productId}`}
-                        >
-                          <span aria-hidden="true">+</span>
-                        </button>
-                      </div>
                       <button
-                        onClick={() => handleAddToCart(product.productId)}
-                        className={`px-4 py-2 rounded-lg transition-colors ${quantities[product.productId]
-                          ? 'bg-primary hover:bg-accent text-white'
-                          : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
-                          }`}
-                        disabled={!quantities[product.productId]}
-                        aria-label={`Add ${quantities[product.productId] || 0} ${product.name} to cart`}
-                        id={`add-to-cart-${product.productId}`}
+                        onClick={() => handleAddToCart(product)}
+                        className="bg-primary hover:bg-accent text-white px-4 py-2 rounded-lg transition-colors"
+                        aria-label={`Add ${product.name} to cart`}
                       >
                         Add to Cart
                       </button>
@@ -303,6 +258,10 @@ export default function Products() {
             </p>
           </div>
         </div>
+      )}
+
+      {products && (
+        <ChatAI products={products} />
       )}
     </div>
   );

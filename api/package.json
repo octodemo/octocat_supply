@@ -19,14 +19,15 @@
 		"swagger:generate": "tsx src/generate-swagger.ts"
 	},
 	"dependencies": {
-		"@types/cors": "^2.8.19",
 		"@types/better-sqlite3": "^7.6.13",
+		"@types/cors": "^2.8.19",
 		"@types/swagger-jsdoc": "^6.0.4",
 		"@types/swagger-ui-express": "^4.1.8",
 		"better-sqlite3": "^12.4.1",
 		"cors": "^2.8.5",
 		"express": "^4.21.2",
 		"globals": "16.4.0",
+		"openai": "^6.34.0",
 		"swagger-jsdoc": "^6.2.8",
 		"swagger-ui-express": "^5.0.1"
 	},
