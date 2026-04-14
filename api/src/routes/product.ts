@@ -37,6 +37,47 @@
  *             schema:
  *               $ref: '#/components/schemas/Product'
  *
+ * /api/products/search:
+ *   get:
+ *     summary: Search products with filters and sorting
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Search term (matches name and description)
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Minimum price filter
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Maximum price filter
+ *       - in: query
+ *         name: supplierId
+ *         schema:
+ *           type: integer
+ *         description: Filter by supplier ID
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [price_asc, price_desc, name_asc, name_desc]
+ *         description: Sort order
+ *     responses:
+ *       200:
+ *         description: Filtered list of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *
  * /api/products/{id}:
  *   get:
  *     summary: Get a product by ID
@@ -122,6 +163,24 @@ router.get('/', async (req, res, next) => {
   try {
     const repo = await getProductsRepository();
     const products = await repo.findAll();
+    res.json(products);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Search products with filters and sorting
+router.get('/search', async (req, res, next) => {
+  try {
+    const repo = await getProductsRepository();
+    const { q, minPrice, maxPrice, supplierId, sortBy } = req.query;
+    const products = await repo.search({
+      q: q as string | undefined,
+      minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
+      supplierId: supplierId ? parseInt(supplierId as string, 10) : undefined,
+      sortBy: sortBy as 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc' | undefined,
+    });
     res.json(products);
   } catch (error) {
     next(error);

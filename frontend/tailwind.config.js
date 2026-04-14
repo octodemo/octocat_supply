@@ -11,6 +11,9 @@ export default {
         'dark': '#0A0A0A',
         'light': '#F5F5F5',
         'accent': '#8BC34A',
+        'filter-violet': '#8B5CF6',
+        'filter-coral': '#FF6B6B',
+        'filter-fuchsia': '#D946EF',
         'gray': {
           100: '#f5f5f5',
           200: '#e5e5e5',

@@ -131,7 +131,59 @@ export class ProductsRepository {
   async findByName(name: string): Promise<Product[]> {
     try {
       const rows = await this.db.all<DatabaseRow>(
-        `SELECT * FROM products WHERE name LIKE '%${name}%' ORDER BY name`,
+        'SELECT * FROM products WHERE name LIKE ? ORDER BY name',
+        [`%${name}%`],
+      );
+      return mapDatabaseRows<Product>(rows);
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Search products with filters and sorting
+   */
+  async search(params: {
+    q?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    supplierId?: number;
+    sortBy?: 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc';
+  }): Promise<Product[]> {
+    try {
+      const conditions: string[] = [];
+      const values: (string | number)[] = [];
+
+      if (params.q) {
+        conditions.push('(name LIKE ? OR description LIKE ?)');
+        values.push(`%${params.q}%`, `%${params.q}%`);
+      }
+      if (params.minPrice != null) {
+        conditions.push('price >= ?');
+        values.push(params.minPrice);
+      }
+      if (params.maxPrice != null) {
+        conditions.push('price <= ?');
+        values.push(params.maxPrice);
+      }
+      if (params.supplierId != null) {
+        conditions.push('supplier_id = ?');
+        values.push(params.supplierId);
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      const orderMap: Record<string, string> = {
+        price_asc: 'price ASC',
+        price_desc: 'price DESC',
+        name_asc: 'name ASC',
+        name_desc: 'name DESC',
+      };
+      const orderBy = orderMap[params.sortBy || ''] || 'product_id ASC';
+
+      const rows = await this.db.all<DatabaseRow>(
+        `SELECT * FROM products ${where} ORDER BY ${orderBy}`,
+        values,
       );
       return mapDatabaseRows<Product>(rows);
     } catch (error) {
