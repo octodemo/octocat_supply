@@ -1,12 +1,249 @@
 import Slider from 'react-slick';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
+type EffectParticle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
+  color: string;
+};
+
+type ExplosionEffect = {
+  particles: EffectParticle[];
+};
+
 export default function Welcome() {
   const sliderRef = useRef<Slider | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const heroContainerRef = useRef<HTMLDivElement>(null);
+  const effectsCanvasRef = useRef<HTMLCanvasElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const effectsRef = useRef<ExplosionEffect[]>([]);
+  const animationRef = useRef<number | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
   const { darkMode } = useTheme();
   const navigate = useNavigate();
+
+  // Eye positions relative to hero container
+  // Adjust these based on your hero.png cat image
+  const EYE_POSITIONS = {
+    left: { x: 0.26, y: 0.35 },
+    right: { x: 0.305, y: 0.35 }
+  };
+
+  // Track mouse movement
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Draw lasers
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = heroContainerRef.current;
+
+    if (!canvas) {
+      return;
+    }
+    if (!container) {
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return;
+    }
+
+    canvas.width = container.offsetWidth;
+    canvas.height = container.offsetHeight;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const containerRect = container.getBoundingClientRect();
+    const mouseX = mousePos.x - containerRect.left;
+    const mouseY = mousePos.y - containerRect.top;
+    const targetX = Math.min(Math.max(mouseX, 0), canvas.width);
+    const targetY = Math.min(Math.max(mouseY, 0), canvas.height);
+
+    const leftEye = {
+      x: canvas.width * EYE_POSITIONS.left.x,
+      y: canvas.height * EYE_POSITIONS.left.y
+    };
+    const rightEye = {
+      x: canvas.width * EYE_POSITIONS.right.x,
+      y: canvas.height * EYE_POSITIONS.right.y
+    };
+
+    // Draw lasers from each eye to mouse position
+    [leftEye, rightEye].forEach((eye) => {
+      // Outer glow
+      ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+      ctx.shadowBlur = 25;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+      ctx.lineWidth = 12;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(eye.x, eye.y);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+
+      // Main laser
+      ctx.shadowColor = 'rgba(255, 0, 0, 0.9)';
+      ctx.shadowBlur = 15;
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(eye.x, eye.y);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+
+      // Laser dot at mouse
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(255, 100, 100, 0.4)';
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, 15, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }, [mousePos, EYE_POSITIONS.left.x, EYE_POSITIONS.left.y, EYE_POSITIONS.right.x, EYE_POSITIONS.right.y]);
+
+  // Handle resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current && heroContainerRef.current) {
+        canvasRef.current.width = heroContainerRef.current.offsetWidth;
+        canvasRef.current.height = heroContainerRef.current.offsetHeight;
+      }
+
+      if (effectsCanvasRef.current && rootRef.current) {
+        effectsCanvasRef.current.width = rootRef.current.offsetWidth;
+        effectsCanvasRef.current.height = rootRef.current.offsetHeight;
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const canvas = effectsCanvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return;
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'lighter';
+
+      effectsRef.current = effectsRef.current
+        .map((effect) => {
+          effect.particles = effect.particles.filter((particle) => particle.life > 0);
+
+          effect.particles.forEach((particle) => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vx *= 0.98;
+            particle.vy = particle.vy * 0.98 - 0.02;
+            particle.life -= 1;
+
+            const alpha = Math.max(particle.life / particle.maxLife, 0);
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = particle.color;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          return effect;
+        })
+        .filter((effect) => effect.particles.length > 0);
+
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
+  const spawnExplosion = (x: number, y: number) => {
+    const particles: EffectParticle[] = [];
+
+    for (let i = 0; i < 45; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 4;
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 20 + Math.random() * 24,
+        maxLife: 44,
+        size: 2 + Math.random() * 3,
+        color: Math.random() > 0.5 ? '#ffcc33' : '#ff5a1f',
+      });
+    }
+
+    for (let i = 0; i < 35; i += 1) {
+      particles.push({
+        x: x + (Math.random() - 0.5) * 16,
+        y: y + (Math.random() - 0.5) * 10,
+        vx: (Math.random() - 0.5) * 1.8,
+        vy: -(1.5 + Math.random() * 2.4),
+        life: 26 + Math.random() * 20,
+        maxLife: 46,
+        size: 3 + Math.random() * 4,
+        color: Math.random() > 0.4 ? '#ff7a1f' : '#ff2d00',
+      });
+    }
+
+    effectsRef.current.push({ particles });
+  };
+
+  const handleBackgroundClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest('button, a, input, textarea, select')) {
+      return;
+    }
+
+    const rootBounds = rootRef.current?.getBoundingClientRect();
+    if (!rootBounds) {
+      return;
+    }
+
+    const x = event.clientX - rootBounds.left;
+    const y = event.clientY - rootBounds.top;
+    spawnExplosion(x, y);
+  };
 
   const sliderSettings = {
     dots: true,
@@ -40,17 +277,29 @@ export default function Welcome() {
 
   return (
     <div
+      ref={rootRef}
+      onClick={handleBackgroundClick}
       className={`relative ${darkMode ? 'bg-dark text-light' : 'bg-white text-gray-800'} transition-colors duration-300`}
     >
+      <canvas
+        ref={effectsCanvasRef}
+        className="absolute inset-0 h-full w-full pointer-events-none z-20"
+      />
       {/* Content */}
-      <div className="relative px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-8">
         <div className="relative py-4">
-          {/* Hero Image */}
-          <div className="w-full max-w-7xl mx-auto">
+          {/* Hero Image Container with Laser Canvas */}
+          <div className="w-full max-w-7xl mx-auto relative" ref={heroContainerRef}>
             <img
               src="/hero.png"
               alt="Smart Cat Products powered by AI"
               className="w-full h-auto rounded-lg"
+            />
+            {/* Laser effect canvas */}
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 h-full w-full rounded-lg cursor-none"
+              style={{ pointerEvents: 'none' }}
             />
           </div>
 
