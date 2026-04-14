@@ -1,5 +1,6 @@
 import { useCart, CartItem } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
+import { Link } from 'react-router-dom';
 
 export default function Cart() {
   const { state, removeItem, updateQuantity, clearCart } = useCart();
@@ -125,9 +126,12 @@ export default function Cart() {
           <span className={`text-xl font-semibold ${darkMode ? 'text-light' : 'text-gray-800'}`}>
             Total: ${totalPrice.toFixed(2)}
           </span>
-          <button className="bg-primary hover:bg-accent text-white px-6 py-3 rounded-md text-lg font-medium transition-colors">
+          <Link
+            to="/checkout"
+            className="bg-primary hover:bg-accent text-white px-6 py-3 rounded-md text-lg font-medium transition-colors"
+          >
             Proceed to Checkout
-          </button>
+          </Link>
         </div>
       </div>
     </div>
