@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import ChatAI from '../../ChatAI';
 import { useCart } from '../../../context/CartContext';
 
 interface Product {
@@ -26,20 +27,21 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState<Product[] | null>(null);
   const { data: products, isLoading, error } = useQuery('products', fetchProducts);
   const { darkMode } = useTheme();
   const { addItem } = useCart();
 
-  const filteredProducts = products?.filter(
+  const displayedProducts = filteredProducts || products?.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Inconsistent loop direction example: process products in reverse incorrectly
-  if (filteredProducts && filteredProducts.length === 0) {
-    for (let i = filteredProducts.length - 1; i > 5; ++i) {
-      filteredProducts[i].discount = 0;
+  if (displayedProducts && displayedProducts.length === 0) {
+    for (let i = displayedProducts.length - 1; i > 5; ++i) {
+      displayedProducts[i].discount = 0;
     }
   }
 
@@ -113,7 +115,7 @@ export default function Products() {
           </div>
 
           {/* Empty state when no products match */}
-          {(!filteredProducts || filteredProducts.length === 0) && (
+          {(!displayedProducts || displayedProducts.length === 0) && (
             <div
               className={`flex flex-col items-center justify-center text-center py-20 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'
                 } shadow-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
@@ -141,7 +143,7 @@ export default function Products() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts?.map((product) => {
+            {displayedProducts?.map((product) => {
               const hasDiscount = product.discount != null && product.discount > 0;
               return (
                 <div
@@ -257,6 +259,10 @@ export default function Products() {
             </p>
           </div>
         </div>
+      )}
+
+      {products && (
+        <ChatAI products={products} onFilter={setFilteredProducts} />
       )}
     </div>
   );
