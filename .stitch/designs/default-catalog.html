@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Products | OctoCAT Supply</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            primary: "#76B852",
+                            violet: "#8B5CF6",
+                            coral: "#FF6B6B",
+                            fuchsia: "#D946EF"
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                        label: ["Inter", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-nav-border {
+            position: relative;
+        }
+        .active-nav-border::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: currentColor;
+        }
+    </style>
+</head>
+<body class="bg-[#F3F4F6] font-body text-gray-900 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm">
+<nav class="flex justify-between items-center px-6 py-3 max-w-full">
+<!-- Brand Logo Cluster -->
+<div class="flex items-center gap-3">
+<div class="bg-brand-primary/10 p-2 rounded-xl">
+<span class="material-symbols-outlined text-brand-primary text-2xl" style="font-variation-settings: 'FILL' 1;">pets</span>
+</div>
+<div class="flex flex-col items-start leading-tight">
+<span class="text-xl font-bold text-brand-primary dark:text-brand-500 font-headline tracking-tight">OctoCAT Supply</span>
+<span class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Smart Cat Tech, Powered by AI</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="hidden md:flex items-center gap-8 font-['Inter'] font-medium text-sm tracking-tight">
+<a class="text-gray-600 dark:text-gray-400 hover:text-brand-primary dark:hover:text-brand-primary transition-colors" href="#">Home</a>
+<a class="text-brand-primary dark:text-brand-primary border-b-2 border-brand-primary dark:border-brand-primary pb-1" href="#">Products</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-brand-primary dark:hover:text-brand-primary transition-colors" href="#">About Us</a>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4">
+<button class="p-2 text-gray-600 dark:text-gray-400 hover:opacity-80 transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+</button>
+<button class="bg-brand-coral text-white px-5 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-all active:scale-95 shadow-md">
+                    Login
+                </button>
+</div>
+</nav>
+</header>
+<main class="pt-24 pb-16 px-6 max-w-7xl mx-auto w-full flex-grow">
+<!-- Page Title -->
+<div class="mb-8">
+<h1 class="text-4xl font-extrabold text-gray-900 font-headline tracking-tight">Products</h1>
+</div>
+<!-- Search & Filter Bar (DEFAULT STATE) -->
+<div class="flex flex-col md:flex-row gap-4 mb-10">
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-brand-violet" data-icon="search">search</span>
+<input class="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-violet/20 focus:border-brand-violet outline-none transition-all placeholder:text-gray-400" placeholder="Search products..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-6 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-all active:scale-95 shadow-sm">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+<span>Filters</span>
+</button>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Product 1 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300 border border-transparent hover:border-brand-primary/20">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="high-tech sleek white automatic cat feeder with minimalist digital display in a modern clean kitchen setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkJsiul8vDEtnaJD0FXrMq2hGfQpMm2Lyjm8S0tQBcrnNsTY1CjY92LBjh9fMqkn-sE9NIWlbI_Oe0uesCNqGB4lhgNF82SmFvI0lJMcFMBlF9DbKPZgYPaTnUA7k4504zxB47ImYKiQj0Ocm1BCVF723bemkMVOKP7iPK00_fhrT05hcJwQ7oqj5AH4Pmpq9-B1jj7Hpo3WkN0wJKJMYUC5E8-gv58tyh0UG8x_V1dmLD2SuPXM4Ff-6oeHwR7W9TZ4c_yiAe7xTY"/>
+<div class="absolute top-0 right-0 bg-brand-primary text-white text-xs font-bold px-3 py-2 -mr-2 mt-4 rotate-12 shadow-lg">25% OFF</div>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">SmartFeeder One</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">AI-optimized nutrition dispenser with portion control.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$97.49</span>
+<span class="text-sm text-gray-400 line-through">$129.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+<button class="px-3 py-1 hover:bg-gray-100 text-gray-400"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1 hover:bg-gray-100 text-gray-400"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm hover:opacity-90 active:scale-95 transition-all">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 2 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="spherical futuristic self-cleaning cat litter dome with glowing soft blue led indicator in contemporary bathroom" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQFqiU2Jfz8DMZ2hAMRnRUtSdxCb9FP4wLtesrLaRSOh0Nq6htjfG-aR-g--mugdFw2Ib6atwDWB5MuO6lpJVKtPtjwumCe2QTl3fvnJxYrdAiE1ozsNBWucXVPPIxkF0UiSAkGZ0qkyOoapVoMmaGPKcDnPx0LTPTbQofe44HKYrb7tDNg70emokDJUfGPm9k35mu7LES_AclPahLqps-3AV_XT9_X7Vu997hmbY-eSA8j2wOGHgN-3Kk4D_8TUe153KXPeFyk_9F"/>
+<div class="absolute top-0 right-0 bg-brand-primary text-white text-xs font-bold px-3 py-2 -mr-2 mt-4 rotate-12 shadow-lg">25% OFF</div>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">AutoClean Litter Dome</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Whisper-quiet self-cleaning automated sanitation system.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$149.99</span>
+<span class="text-sm text-gray-400 line-through">$199.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 3 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="interactive digital cat toy projector showing laser movements on wooden floor with happy cat playing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0JBZyh48tPq-4sjbLGJFBVHztTo8PRwa4I5ysphcy8dRuxpSICkOQUn_f9FxjeUWHE4mGzAxs1R2Uk9HToCRjQRgehiOi1-nndV188sbigyERBTuISwxEGnqyK8tE9ODL1PR6UWLkyHL9gY5S7UUwb_JlcTMi42NJPzR0sw8nqtaGxM7L3tdREL6fbpSJdRdqDTxS15FbIKW7aoYEpraCBxJTKfj0tAs7-_3In_sjVYaTpXYItXO3iu2eV5uXe_mmi2HjLMoPvLky"/>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">CatFlix Entertainment</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Interactive laser and sound on-demand entertainment.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$89.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 4 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="slim premium silver smart pet collar with small glowing tracking light on elegant pedigree cat" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOPfBXWm86CyeYCnfwJoX6wa68K5f2RNyKbCCpXIfBMOhUQ1SJZ8Knqn7fE-0qEBDpdPSZzMsjelb6vkh2YTxwfjKIBLbjBPHIqg4LZRe853UZYj09iE4pOXQNlys6DBdSWG3hFb2UgCVNdKVQM6RxJq3eU9O6jfkU4I2PtM3iFArHQsIvQjwKAif8yuNSHkSs26YwX5CYyuCzd-qOwJGxvGP4zMZ2uAMbRGaj25m7kOlDmyxzf_wGxYMhAJWYG1Q_oTSUkoerwtKQ"/>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">PawTrack Smart Collar</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Advanced GPS tracking and health monitoring in one.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$79.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 5 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="360 degree smart pet camera with sleek black dome finish mounted on light wood shelf" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNxlczeEDCDu0j0gbLEtbCGwFEoN4_IXahXxg8Rlz9ecQJLujwwZeeLOcOhQbuNq9P1hn3uxeyrxp3VEQiww7F2gPACoNTf_lIC5_nsbb3gTkQljhp47FPU8h9IBcWOByZApzfPGgrQJIpq_NpOULHTwu8TEZ7MaCh2siaxQqbvBxvPzxmAAsCwH3wgGiftxHduh1-asJ6fTJHP7ML3tFE4ySr779iP5ycWnF8WPhRUvHHLOZJNHXlzPBEkQFQcnXSdLXncehZhPgn"/>
+<div class="absolute top-0 right-0 bg-brand-primary text-white text-xs font-bold px-3 py-2 -mr-2 mt-4 rotate-12 shadow-lg">15% OFF</div>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">WhiskerCam Pro</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Full HD 360 camera with AI cat activity detection.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$127.49</span>
+<span class="text-sm text-gray-400 line-through">$149.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 6 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="minimalist circular heated cat bed with soft plush gray interior and light wooden base" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6FOpBWltdteDRSJYnFMku0tH24486G_JIne9iyj3X29zjnNX0UVE5kBbL6V98LcYRLbhXWTPbh6s1dtXLrRAEZOKnFlnyf6KCHgagPkTYT-oCTlYWTTlw-dEAswJ7UMrXofxvUKYcVXW14stBMIIkk0bi8UpSSDGBIR73PFQVeKm4zTm8fsPSfvH3HW2-EoO8paKLxLVu5oVbWpe3yECoIQijIzlODpB_fnX04IwXiK2Om32zRjHeJNhkNRYRw6h0z6-rQqdo5HP-"/>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">ThermoNest Deluxe</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Smart temperature-controlled bed for ultimate comfort.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$99.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 7 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="architectural modern cat tree with clean white panels and light oak scratching posts in sunny living room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVlqwGHtEYjU0vfJWBf-UFZxLrlaCLUdTASlF7si00XBbBt1fLXc7YkOOaoIj1j1hh9CRBLl7DRmpeDhoWh6xEjlL4vXHsWsWAzpijPZ46o3JwK33drSOcYCF5mYRgl2zzmLWToquGSgOPmbkRfmaQuKwQxxORgYG4RD3u-eNIePK-OWjED4Hzy0za_GStKl_M_Qx43BFw5vDG3OU3QsVPPS9hgPBE_6QiWqZFDRpBtepxslHhZvNX_u_N4V0Nj7utJ6QQdKQ4-QMS"/>
+<div class="absolute top-0 right-0 bg-brand-primary text-white text-xs font-bold px-3 py-2 -mr-2 mt-4 rotate-12 shadow-lg">10% OFF</div>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">ClimbCast Cat Tree</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Structural masterpiece for climbing and resting.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$269.99</span>
+<span class="text-sm text-gray-400 line-through">$299.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 8 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="crystal clear glass pet fountain with cascading water and integrated filter housing with soft light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcqPECiIqtPPHBFfLOPxN2PLDzQwGFVqDNysco3mfyJv8iNaSl9fwgrwUa3fxq1mRNoRr4zXyWzPu7KUwyzOZ_UTqWIMoZfiJbZraMFyCn_8E8Nv1k0xjkn2US_69d8_mjxZHDxcQIuoRbTiYnp-lQxjaOmbs0Y5s7HAmf66brVivQN7QpXks931x76oQ5mqmck9IWNmGbz0aa60U4UB9plRxZVzNGPJa5GQR7LNEUoaKcnUCK7TE0u40N6cMKvSMFqxtVbNR-tuAN"/>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">HydroFlow Smart Bowl</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">AI-powered hydration system with UV sterilization.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$119.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 9 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="small autonomous round grooming robot with soft brushes gently following a white cat in minimalist home" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-TZ339tNyB_UTkWKu7T9cPzRCF6iWy-O2VwgaG2FVSGb2g2r83k9Ov11XGmPPMusuJdBVdFG5I8uAbVlnWaTqCYQhppD3qFa48tQBNl_r9O2yoE2J6BAT47dBK4Xf86n6KuoSTM8RvaILasQkxctlzleNiKWTOAJgLbmytV-UTue9ECrvM6oQ80UukytBMzGpU6TIcdAuM7Hong4HzJOA_fOBuLtlaCaSY4LinGP-9x11Lkdzh54WjUFJgH_MHDKRcO3-uz8rdg5P"/>
+<div class="absolute top-0 right-0 bg-brand-primary text-white text-xs font-bold px-3 py-2 -mr-2 mt-4 rotate-12 shadow-lg">20% OFF</div>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">PurrFect Groomer Bot</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Autonomous robot for gentle deshedding and massage.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$319.99</span>
+<span class="text-sm text-gray-400 line-through">$399.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 10 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="premium gray memory foam cat bed with orthopaedic support features in a cozy bedroom corner" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI8VeLTwnDS-Xgy7sATmcQ2ZSyjdU0MvSfRdi_SLttEgjYj2Ewd9mMBBurvN7Vj9zjga1g8k45iHwNLhwQWKAgLbQhlNuXjWBngnQmfjeCs5kr2LArm5Wq6RTmLZ0HImZyO3ujKp0suTCdZWgoCXQMHdaXAZB_FhqIiC7gonpKMvCAoN_N0G8JmJ1n1zIDvZZbXIij9vevAIcmdaDPHJe987WHkkPs9IU8QT1vcfFlTzd4MvrgNv-uA_a9maJlFaM7FIc105bIv6tl"/>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">MemoryFoam Recovery Pod</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Therapeutic joint-support sleeping pod for senior cats.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$179.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 11 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="high-tech microchip activated cat door with digital locking mechanism and brushed metal finish" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCN6-AprUR14IUGRh0qVWm0QmrGhra1OWjZkdqeJ6t1x0lZFxvl9jJEkHN_adLH1VGYojZFdu4dRaa72w72ZGtQq_7fXngACBiXlFkrYhjf0z3Lmw5DkSl9LqMW7cSRqxIyYz1OHUgf3SlH8nEyxpn-GrSRPCpi48cqVQw1c-QAp4ujia4adfDvRUNUAB1CRT8ejO01QKIL0uNuakmjCUitHTb3XgMCdg_EpEiYYT9FyfQMA5h2c9lh6PobhhncP5bgkzcFKVkX2cvd"/>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">DoorDash Smart Portal</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Secure microchip-activated pet entry with app control.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$159.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product 12 -->
+<div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+<div class="relative aspect-square overflow-hidden bg-gray-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="thin dark gray pressure-sensitive mat with blue circuit patterns under a cat running at full speed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDo8pQcYX450IB6o5sAYp54feA-jZ-0FWiESCsafoVNGFPwKU5hPvljEs-a3cFdbOwxxTfxKmyo002brrLgFA9xD4Ug5e7DuIP_fvdvkUNUoNBo2FDwlQ7VGUUyTsP3IgmumX8SXwrJn37Uf7xmIhMMcHYwzNbeejGuwjL_8E87Ix4I4uksz2UJna6QuMFvG0EZeSi7pTmW60m_lppbpDRbIAeM_AjaO_RoZ_AlT_0mNbDitSVqnn4oAEFKCEebrTVAqc8cXRnzb7cM"/>
+</div>
+<div class="p-5">
+<h3 class="font-semibold text-gray-800 text-lg mb-1">ZoomieTracker AI Mat</h3>
+<p class="text-sm text-gray-500 mb-4 leading-relaxed">Motion-sensing play mat that tracks activity levels.</p>
+<div class="flex items-baseline gap-2 mb-4">
+<span class="text-xl font-bold text-brand-primary">$79.99</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center border border-gray-200 rounded-lg">
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="remove">remove</span></button>
+<span class="px-2 text-sm font-semibold">1</span>
+<button class="px-3 py-1"><span class="material-symbols-outlined text-sm" data-icon="add">add</span></button>
+</div>
+<button class="flex-grow bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm">Add to Cart</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto bg-gray-50 dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-8 py-12 max-w-7xl mx-auto font-['Inter'] text-sm leading-relaxed">
+<!-- Brand Column -->
+<div class="flex flex-col gap-4">
+<div class="text-lg font-bold text-brand-primary">OctoCAT Supply</div>
+<p class="text-gray-500 dark:text-gray-400">© 2024 OctoCAT Supply. Smart Cat Tech, Powered by AI.</p>
+</div>
+<!-- Links Column 1 -->
+<div class="flex flex-col gap-4">
+<h4 class="font-semibold text-brand-primary dark:text-brand-primary uppercase text-xs tracking-widest">About</h4>
+<ul class="flex flex-col gap-2">
+<li><a class="text-gray-500 dark:text-gray-400 hover:text-brand-violet transition-colors" href="#">Our Mission</a></li>
+<li><a class="text-gray-500 dark:text-gray-400 hover:text-brand-violet transition-colors" href="#">AI Research</a></li>
+<li><a class="text-gray-500 dark:text-gray-400 hover:text-brand-violet transition-colors" href="#">Contact</a></li>
+</ul>
+</div>
+<!-- Links Column 2 -->
+<div class="flex flex-col gap-4">
+<h4 class="font-semibold text-brand-primary dark:text-brand-primary uppercase text-xs tracking-widest">Account</h4>
+<ul class="flex flex-col gap-2">
+<li><a class="text-gray-500 dark:text-gray-400 hover:text-brand-violet transition-colors" href="#">Dashboard</a></li>
+<li><a class="text-gray-500 dark:text-gray-400 hover:text-brand-violet transition-colors" href="#">Orders</a></li>
+<li><a class="text-gray-500 dark:text-gray-400 hover:text-brand-violet transition-colors" href="#">Wishlist</a></li>
+</ul>
+</div>
+<!-- Links Column 3 -->
+<div class="flex flex-col gap-4">
+<h4 class="font-semibold text-brand-primary dark:text-brand-primary uppercase text-xs tracking-widest">Social Media</h4>
+<div class="flex gap-4">
+<a class="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:text-brand-violet transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="public">public</span>
+</a>
+<a class="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:text-brand-violet transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="chat">chat</span>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

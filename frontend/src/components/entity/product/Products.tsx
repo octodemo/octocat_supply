@@ -134,19 +134,11 @@ export default function Products() {
             Products
           </h1>
 
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <div className="relative flex-grow">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-800 text-light border-gray-700' : 'bg-white text-gray-800 border-gray-300'} rounded-lg border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-300`}
-                  aria-label="Search products"
-                />
+          <section className="space-y-4">
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-grow group">
                 <svg
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-gray-500' : 'text-gray-400'} group-focus-within:text-filter-violet transition-colors duration-200`}
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -156,15 +148,23 @@ export default function Products() {
                 >
                   <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
+                <input
+                  type="text"
+                  placeholder="Search for smart tech..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full pl-12 pr-4 py-4 ${darkMode ? 'bg-gray-800 text-light border-gray-700' : 'bg-white text-gray-800 border-gray-200'} rounded-lg border focus:border-transparent focus:ring-2 focus:ring-filter-violet focus:outline-none transition-all duration-200 shadow-sm`}
+                  aria-label="Search products"
+                />
               </div>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2 rounded-lg border transition-colors duration-300 flex items-center gap-2 ${
+                className={`relative px-6 py-4 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 ${
                   showFilters || hasActiveFilters
-                    ? 'bg-primary text-white border-primary'
+                    ? 'bg-filter-violet text-white hover:opacity-90'
                     : darkMode
-                      ? 'bg-gray-800 text-light border-gray-700 hover:border-primary'
-                      : 'bg-white text-gray-800 border-gray-300 hover:border-primary'
+                      ? 'bg-gray-800 text-light border border-gray-700 hover:border-filter-violet'
+                      : 'bg-white text-gray-800 border border-gray-200 hover:border-filter-violet'
                 }`}
                 aria-label="Toggle filters"
               >
@@ -173,7 +173,7 @@ export default function Products() {
                 </svg>
                 Filters
                 {hasActiveFilters && (
-                  <span className="bg-white text-primary text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-2 -right-2 bg-filter-coral text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                     !
                   </span>
                 )}
@@ -181,64 +181,77 @@ export default function Products() {
             </div>
 
             {showFilters && (
-              <div className={`flex flex-wrap gap-4 p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} transition-colors duration-300`}>
-                <div className="flex items-center gap-2">
-                  <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Price:</label>
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    className={`w-24 px-3 py-1.5 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-300'} focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none`}
-                    min="0"
-                    aria-label="Minimum price"
-                  />
-                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>-</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    className={`w-24 px-3 py-1.5 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-300'} focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none`}
-                    min="0"
-                    aria-label="Maximum price"
-                  />
-                </div>
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg overflow-hidden relative`}
+                style={{ boxShadow: '0 4px 20px rgba(139, 92, 246, 0.15)' }}>
+                <div className="h-[3px] w-full bg-gradient-to-r from-filter-violet to-filter-fuchsia"></div>
+                <div className="p-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+                  <div className="space-y-3">
+                    <label className={`text-sm font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Price Range</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        className={`w-full px-3 py-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-white text-gray-800 border-gray-200'} focus:ring-filter-violet focus:border-filter-violet focus:outline-none transition-all`}
+                        min="0"
+                        aria-label="Minimum price"
+                      />
+                      <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>to</span>
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        className={`w-full px-3 py-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-white text-gray-800 border-gray-200'} focus:ring-filter-violet focus:border-filter-violet focus:outline-none transition-all`}
+                        min="0"
+                        aria-label="Maximum price"
+                      />
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Sort:</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className={`px-3 py-1.5 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-gray-50 text-gray-800 border-gray-300'} focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none`}
-                    aria-label="Sort products"
-                  >
-                    <option value="">Default</option>
-                    <option value="price_asc">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
-                    <option value="name_asc">Name: A to Z</option>
-                    <option value="name_desc">Name: Z to A</option>
-                  </select>
-                </div>
+                  <div className="space-y-3">
+                    <label className={`text-sm font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Sort By</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className={`w-full px-3 py-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 text-light border-gray-600' : 'bg-white text-gray-800 border-gray-200'} focus:ring-filter-violet focus:border-filter-violet focus:outline-none transition-all`}
+                      aria-label="Sort products"
+                    >
+                      <option value="">Default</option>
+                      <option value="price_asc">Price: Low to High</option>
+                      <option value="price_desc">Price: High to Low</option>
+                      <option value="name_asc">Name: A to Z</option>
+                      <option value="name_desc">Name: Z to A</option>
+                    </select>
+                  </div>
 
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => { setMinPrice(''); setMaxPrice(''); setSortBy(''); }}
-                    className="px-3 py-1.5 text-sm text-primary hover:text-accent transition-colors"
-                    aria-label="Clear all filters"
-                  >
-                    Clear filters
-                  </button>
-                )}
+                  <div></div>
+
+                  {hasActiveFilters && (
+                    <div className="flex items-end justify-end">
+                      <button
+                        onClick={() => { setMinPrice(''); setMaxPrice(''); setSortBy(''); }}
+                        className="text-filter-coral font-bold text-sm hover:underline flex items-center gap-1 transition-all"
+                        aria-label="Clear all filters"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Clear filters
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {isStale && (
               <div className="h-1 w-full overflow-hidden rounded-full bg-gray-200">
-                <div className="h-full bg-primary animate-pulse rounded-full w-2/3"></div>
+                <div className="h-full bg-gradient-to-r from-filter-violet to-filter-fuchsia animate-pulse rounded-full w-2/3"></div>
               </div>
             )}
-          </div>
+          </section>
 
           {/* Empty state when no products match */}
           {(!filteredProducts || filteredProducts.length === 0) && (
@@ -268,73 +281,69 @@ export default function Products() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredProducts?.map((product) => {
               const hasDiscount = product.discount != null && product.discount > 0;
               return (
-                <div
+                <article
                   key={product.productId}
-                  className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(118,184,82,0.3)] flex flex-col`}
+                  className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl overflow-hidden border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_-5px_rgba(118,184,82,0.2)] flex flex-col group`}
                 >
                   <div
-                    className={`relative h-56 ${darkMode ? 'bg-gradient-to-t from-gray-700 to-gray-800' : 'bg-gradient-to-t from-gray-100 to-white'} transition-colors duration-300 cursor-pointer`}
+                    className={`relative h-56 ${darkMode ? 'bg-gradient-to-br from-gray-700 to-gray-800' : 'bg-gradient-to-br from-gray-50 to-gray-200'} overflow-hidden cursor-pointer`}
                     onClick={() => handleProductClick(product)}
                   >
                     <img
                       src={`/${product.imgName}`}
                       alt={product.name}
-                      className="w-full h-full object-contain p-2"
+                      className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-110"
                     />
                     {hasDiscount && (
-                      <div className="absolute top-8 left-0 bg-primary text-white px-3 py-1 -rotate-90 transform -translate-x-5 shadow-md">
+                      <div className="absolute top-4 left-0 z-10 bg-primary text-white text-[10px] font-black px-4 py-1.5 uppercase tracking-widest -rotate-2 origin-left shadow-lg">
                         {Math.round(product.discount! * 100)}% OFF
                       </div>
                     )}
                   </div>
 
-                  <div className="p-4 flex flex-col flex-grow">
-                  <h3
-                    className={`text-xl font-semibold ${darkMode ? 'text-light' : 'text-gray-800'} mb-2 transition-colors duration-300`}
-                  >
-                    {product.name}
-                  </h3>
-                  <p
-                    className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4 flex-grow transition-colors duration-300`}
-                  >
-                    {product.description}
-                  </p>
-                  <div className="space-y-4 mt-auto">
-                    <div className="flex justify-between items-center">
+                  <div className="p-5 flex flex-col flex-grow">
+                    <h3
+                      className={`text-lg font-bold ${darkMode ? 'text-light' : 'text-gray-900'} mb-1`}
+                    >
+                      {product.name}
+                    </h3>
+                    <p
+                      className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-xs mb-4 flex-grow`}
+                    >
+                      {product.description}
+                    </p>
+                    <div className="flex items-center justify-between mb-4">
                       {hasDiscount ? (
-                        <div>
-                          <span className="text-gray-500 line-through text-sm mr-2">
+                        <div className="flex flex-col">
+                          <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} text-xs line-through`}>
                             ${product.price.toFixed(2)}
                           </span>
-                          <span className="text-primary text-xl font-bold">
+                          <span className="text-primary font-extrabold text-xl">
                             ${(product.price * (1 - product.discount!)).toFixed(2)}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-primary text-xl font-bold">
+                        <span className="text-primary font-extrabold text-xl">
                           ${product.price.toFixed(2)}
                         </span>
                       )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
                       <div
-                        className={`flex items-center space-x-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg p-1 transition-colors duration-300`}
+                        className={`flex items-center ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'} rounded-full border px-3 py-1 gap-4`}
                       >
                         <button
                           onClick={() => handleQuantityChange(product.productId, -1)}
-                          className={`w-8 h-8 flex items-center justify-center ${darkMode ? 'text-light' : 'text-gray-700'} hover:text-primary transition-colors duration-300`}
+                          className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} hover:text-primary font-bold transition-colors`}
                           aria-label={`Decrease quantity of ${product.name}`}
                           id={`decrease-qty-${product.productId}`}
                         >
-                          <span aria-hidden="true">-</span>
+                          -
                         </button>
                         <span
-                          className={`${darkMode ? 'text-light' : 'text-gray-800'} min-w-[2rem] text-center transition-colors duration-300`}
+                          className={`text-sm font-bold w-4 text-center ${darkMode ? 'text-light' : 'text-gray-800'}`}
                           aria-label={`Quantity of ${product.name}`}
                           id={`qty-${product.productId}`}
                         >
@@ -342,29 +351,32 @@ export default function Products() {
                         </span>
                         <button
                           onClick={() => handleQuantityChange(product.productId, 1)}
-                          className={`w-8 h-8 flex items-center justify-center ${darkMode ? 'text-light' : 'text-gray-700'} hover:text-primary transition-colors duration-300`}
+                          className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} hover:text-primary font-bold transition-colors`}
                           aria-label={`Increase quantity of ${product.name}`}
                           id={`increase-qty-${product.productId}`}
                         >
-                          <span aria-hidden="true">+</span>
+                          +
                         </button>
                       </div>
-                      <button
-                        onClick={() => handleAddToCart(product.productId)}
-                        className={`px-4 py-2 rounded-lg transition-colors ${quantities[product.productId]
-                          ? 'bg-primary hover:bg-accent text-white'
-                          : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
-                          }`}
-                        disabled={!quantities[product.productId]}
-                        aria-label={`Add ${quantities[product.productId] || 0} ${product.name} to cart`}
-                        id={`add-to-cart-${product.productId}`}
-                      >
-                        Add to Cart
-                      </button>
                     </div>
+                    <button
+                      onClick={() => handleAddToCart(product.productId)}
+                      className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
+                        quantities[product.productId]
+                          ? 'bg-primary text-white hover:brightness-105 active:scale-[0.98]'
+                          : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-primary/80 text-white'} cursor-default`
+                      }`}
+                      disabled={!quantities[product.productId]}
+                      aria-label={`Add ${quantities[product.productId] || 0} ${product.name} to cart`}
+                      id={`add-to-cart-${product.productId}`}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                      </svg>
+                      Add to Cart
+                    </button>
                   </div>
-                </div>
-                </div>
+                </article>
               );
             })}
           </div>
