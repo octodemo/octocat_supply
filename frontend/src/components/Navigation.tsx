@@ -1,12 +1,23 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Navigation() {
   const { isLoggedIn, isAdmin, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [wishlistToken, setWishlistToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('wishlist_token');
+    setWishlistToken(token);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'wishlist_token') setWishlistToken(e.newValue);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   return (
     <nav
@@ -26,7 +37,7 @@ export default function Navigation() {
             </Link>
           </div>
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-10 flex items-center space-x-4">
               <Link
                 to="/"
                 className={`${darkMode ? 'text-light hover:text-primary' : 'text-gray-700 hover:text-primary'} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
@@ -39,12 +50,25 @@ export default function Navigation() {
               >
                 Products
               </Link>
+
               <Link
                 to="/about"
                 className={`${darkMode ? 'text-light hover:text-primary' : 'text-gray-700 hover:text-primary'} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
               >
                 About us
               </Link>
+              {wishlistToken && (
+                <Link
+                  to={`/wishlist/${wishlistToken}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-red-500 hover:text-red-400 transition-colors"
+                  aria-label="My Wishlist"
+                >
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  My Wishlist
+                </Link>
+              )}
               {isAdmin && (
                 <div className="relative">
                   <button
