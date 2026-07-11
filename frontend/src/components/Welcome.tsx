@@ -1,10 +1,12 @@
-import Slider from 'react-slick';
+import SlickSlider from 'react-slick';
+// react-slick 0.31+ uses CJS default export wrapped in ESM interop
+const Slider = ('default' in SlickSlider ? (SlickSlider as unknown as { default: typeof SlickSlider }).default : SlickSlider) as typeof SlickSlider;
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
 export default function Welcome() {
-  const sliderRef = useRef<Slider | null>(null);
+  const sliderRef = useRef<InstanceType<typeof Slider> | null>(null);
   const { darkMode } = useTheme();
   const navigate = useNavigate();
 

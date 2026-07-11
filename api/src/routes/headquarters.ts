@@ -194,6 +194,7 @@ router.post('/', async (req, res, next) => {
   try {
     const repo = await getHeadquartersRepository();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hqValidator = new (HeadquartersValidator as any)(req.body.name, req.body.address);
     if (!hqValidator.isValid()) {
       res.status(400).send('Invalid headquarters data');
@@ -212,6 +213,7 @@ router.put('/:id', async (req, res, next) => {
   try {
     const repo = await getHeadquartersRepository();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hqValidator = (HeadquartersValidator as any)(req.body.name, req.body.address);
     if (!hqValidator.isValid()) {
       res.status(400).send('Invalid headquarters data');
@@ -290,6 +292,7 @@ router.get('/:id/label', async (req, res, next) => {
 
 
 // Inconsistent use of new: helper function used both as constructor and regular function
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function HeadquartersValidator(this: any, name: any, address: any) {
   if(!validateHQName(name)) {
     throw new Error('Invalid headquarters name');
@@ -309,6 +312,7 @@ function createLocationLabel(name: string, city: string, country: string): strin
 }
 
 // Implicit operand conversion example
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function calculateHeadquartersMetrics(id: any, floorCount: any, capacity: any): any {
   // This will cause implicit conversion issues when mixed types are passed
   const totalScore = id + floorCount + capacity; // Could be string concatenation or numeric addition
@@ -323,6 +327,7 @@ function calculateHeadquartersMetrics(id: any, floorCount: any, capacity: any): 
 }
 
 // Misleading indentation example
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateHQName(hq: any): boolean {
   if (hq.name) 
     console.log('Name is valid');

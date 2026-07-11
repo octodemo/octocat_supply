@@ -127,7 +127,7 @@
 import express from 'express';
 import { Supplier } from '../models/supplier';
 import { getSuppliersRepository } from '../repositories/suppliersRepo';
-import { handleDatabaseError, NotFoundError } from '../utils/errors';
+import { NotFoundError } from '../utils/errors';
 
 const router = express.Router();
 

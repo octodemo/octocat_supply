@@ -10,6 +10,7 @@
  *       properties:
  *         supplierId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the supplier
  *         name:
  *           type: string

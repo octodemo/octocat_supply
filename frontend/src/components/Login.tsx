@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -6,18 +6,13 @@ import { useTheme } from '../context/ThemeContext';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
   const { darkMode } = useTheme();
   const [searchParams] = useSearchParams();
 
-  useEffect(() => {
-    const errorMsg = searchParams.get('error');
-    if (errorMsg) {
-      setError(errorMsg);
-    }
-  }, [searchParams]);
+  const error = useMemo(() => searchParams.get('error') ?? '', [searchParams]);
+  const [loginError, setLoginError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +20,7 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch {
-      setError('Login failed. Please try again.');
+      setLoginError('Login failed. Please try again.');
     }
   };
 
@@ -42,10 +37,10 @@ export default function Login() {
           Login
         </h2>
 
-        {error && (
+        {(error || loginError) && (
           <div
             className="bg-red-500/10 border border-red-500 text-red-500 rounded-md p-3 mb-4"
-            dangerouslySetInnerHTML={{ __html: error }}
+            dangerouslySetInnerHTML={{ __html: loginError || error }}
           />
         )}
 

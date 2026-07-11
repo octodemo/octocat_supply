@@ -11,6 +11,7 @@
  *       properties:
  *         branchId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the branch
  *         headquartersId:
  *           type: integer

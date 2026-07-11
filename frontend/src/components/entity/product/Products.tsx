@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
 
@@ -26,7 +26,7 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const { data: products, isLoading, error } = useQuery('products', fetchProducts);
+  const { data: products, isPending, error } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
   const { darkMode } = useTheme();
 
   const filteredProducts = products?.filter(
@@ -66,7 +66,7 @@ export default function Products() {
     setShowModal(true);
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div
         className={`min-h-screen ${darkMode ? 'bg-dark' : 'bg-gray-100'} pt-20 px-4 transition-colors duration-300`}

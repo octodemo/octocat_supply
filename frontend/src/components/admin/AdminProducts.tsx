@@ -41,11 +41,6 @@ export default function AdminProducts() {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
-  useEffect(() => {
-    fetchProducts();
-    fetchSuppliers();
-  }, []);
-
   const fetchProducts = async () => {
     try {
       const response = await axios.get(`${api.baseURL}${api.endpoints.products}`);
@@ -85,6 +80,12 @@ export default function AdminProducts() {
       console.error('Error fetching suppliers:', error);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern
+    fetchProducts();
+    fetchSuppliers();
+  }, []);
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {

@@ -101,7 +101,7 @@ class SQLiteHelper {
       const wrappedConnection = this.wrapConnection(this.connection);
       return wrappedConnection;
     } catch (err) {
-      throw new Error(`Failed to connect to database: ${(err as Error).message}`);
+      throw new Error(`Failed to connect to database: ${(err as Error).message}`, { cause: err });
     }
   }
 
@@ -116,7 +116,7 @@ class SQLiteHelper {
       try {
         this.connection.pragma('foreign_keys = ON');
       } catch (err) {
-        throw new Error(`Failed to enable foreign key constraints: ${(err as Error).message}`);
+        throw new Error(`Failed to enable foreign key constraints: ${(err as Error).message}`, { cause: err });
       }
     }
 
@@ -125,7 +125,7 @@ class SQLiteHelper {
       try {
         this.connection.pragma('journal_mode = WAL');
       } catch (err) {
-        throw new Error(`Failed to enable WAL mode: ${(err as Error).message}`);
+        throw new Error(`Failed to enable WAL mode: ${(err as Error).message}`, { cause: err });
       }
     }
   }
@@ -146,7 +146,7 @@ class SQLiteHelper {
         this.connection.close();
         this.connection = null;
       } catch (err) {
-        throw new Error(`Failed to close database: ${(err as Error).message}`);
+        throw new Error(`Failed to close database: ${(err as Error).message}`, { cause: err });
       }
     }
   }

@@ -10,6 +10,7 @@
  *       properties:
  *         headquartersId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the headquarters
  *         name:
  *           type: string

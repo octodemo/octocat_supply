@@ -11,6 +11,7 @@
  *       properties:
  *         orderDetailDeliveryId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the order detail delivery
  *         orderDetailId:
  *           type: integer

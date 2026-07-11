@@ -5,12 +5,15 @@
  *     Delivery:
  *       type: object
  *       required:
- *         - deliveryId
+ *         - deliveryId 
  *         - supplierId
+ *         - deliveryDate
+ *         - name
  *         - status
  *       properties:
  *         deliveryId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the delivery
  *         supplierId:
  *           type: integer

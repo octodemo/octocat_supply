@@ -12,6 +12,7 @@ import headquartersRoutes from './routes/headquarters';
 import supplierRoutes from './routes/supplier';
 import { initializeDatabase } from './init-db';
 import { errorHandler } from './utils/errors';
+import { swaggerOptions } from './swagger-options';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,6 +29,10 @@ const corsOrigins = process.env.API_CORS_ORIGINS
       /^https:\/\/.*\.app\.github\.dev$/,
       // Allow all Azure Container Apps domains
       /^https:\/\/.*\.azurecontainerapps\.io$/,
+      // Allow private network IPs for local/LAN development (IPv4 octets 0–255)
+      /^http:\/\/192\.168\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)(:\d+)?$/,
+      /^http:\/\/10\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)(:\d+)?$/,
+      /^http:\/\/172\.(1[6-9]|2\d|3[01])\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)(:\d+)?$/,
     ];
 
 console.log('Configured CORS origins:', corsOrigins);
@@ -41,28 +46,6 @@ app.use(
     credentials: true,
   }),
 );
-
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Express API with Swagger',
-      version: '1.0.0',
-      description: 'REST API documentation using Swagger/OpenAPI',
-    },
-    servers: [
-      {
-        url: `http://localhost:${port}`,
-        description: 'Development server (HTTP)',
-      },
-      {
-        url: `https://localhost:${port}`,
-        description: 'Development server (HTTPS)',
-      },
-    ],
-  },
-  apis: ['./src/models/*.ts', './src/routes/*.ts'],
-};
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));

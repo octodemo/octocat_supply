@@ -8,9 +8,11 @@
  *         - orderId
  *         - branchId
  *         - orderDate
+ *         - name
  *       properties:
  *         orderId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the order
  *         branchId:
  *           type: integer

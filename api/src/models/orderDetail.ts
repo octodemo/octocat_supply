@@ -13,6 +13,7 @@
  *       properties:
  *         orderDetailId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the order detail
  *         orderId:
  *           type: integer

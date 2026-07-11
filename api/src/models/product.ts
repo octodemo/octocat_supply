@@ -14,6 +14,7 @@
  *       properties:
  *         productId:
  *           type: integer
+ *           readOnly: true
  *           description: The unique identifier for the product
  *         supplierId:
  *           type: integer

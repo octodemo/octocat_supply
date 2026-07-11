@@ -24,7 +24,11 @@ const getBaseUrl = () => {
     return url;
   }
 
-  const url = `${protocolToUse}://localhost:3000`;
+  // Use the current hostname so the API is reachable when accessed via LAN IP
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  // Wrap IPv6 literals in brackets for valid URL construction
+  const hostForUrl = hostname.includes(':') ? `[${hostname}]` : hostname;
+  const url = `${protocolToUse}://${hostForUrl}:3000`;
   console.log(`Using default URL: ${url}`);
   return url;
 };
