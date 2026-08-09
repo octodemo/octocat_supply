@@ -17,11 +17,19 @@ export default function Navigation() {
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center">
               <img src="/copilot.png" alt="Copilot icon" className="h-8 w-auto" />
-              <div className="ml-2">
-                <span className={`text-xl font-bold ${darkMode ? 'text-light' : 'text-gray-800'}`}>
-                  OctoCAT Supply
-                </span>
-                <span className="block text-xs text-primary">Smart Cat Tech, Powered by AI</span>
+              <div className="ml-2 flex items-center gap-2">
+                <div>
+                  <span className={`text-xl font-bold ${darkMode ? 'text-light' : 'text-gray-800'}`}>
+                    OctoCAT Supply
+                  </span>
+                  <span className="block text-xs text-primary">Smart Cat Tech, Powered by AI</span>
+                </div>
+                <img
+                  src="/Zakaz%20ps%C3%B3w%20znak%20ostrzegawczy.png"
+                  alt="Zakaz psow"
+                  title="Zakaz psow"
+                  className="h-[2.9644rem] w-[2.9644rem] sm:h-[3.9525rem] sm:w-[3.9525rem] object-contain"
+                />
               </div>
             </Link>
           </div>
