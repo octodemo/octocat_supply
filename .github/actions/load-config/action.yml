@@ -1,0 +1,96 @@
+name: 'Load Factory Config'
+description: 'Reads .github/factory.yml and exposes config values as outputs'
+
+outputs:
+  labels-prefix:
+    description: 'Label namespace prefix'
+    value: ${{ steps.load.outputs.labels-prefix }}
+  branch-pattern:
+    description: 'Branch naming pattern'
+    value: ${{ steps.load.outputs.branch-pattern }}
+  merge-enabled:
+    description: 'Whether auto-merge is enabled (kill switch)'
+    value: ${{ steps.load.outputs.merge-enabled }}
+  merge-method:
+    description: 'PR merge method (squash, merge, rebase)'
+    value: ${{ steps.load.outputs.merge-method }}
+  merge-require-human-review:
+    description: 'Whether merge requires a human (non-bot) review approval'
+    value: ${{ steps.load.outputs.merge-require-human-review }}
+  merge-delete-branch:
+    description: 'Whether to delete the branch after merge'
+    value: ${{ steps.load.outputs.merge-delete-branch }}
+  merge-auto-on-green:
+    description: 'Whether to auto-merge when CI is green'
+    value: ${{ steps.load.outputs.merge-auto-on-green }}
+  ci-repair-max-attempts:
+    description: 'Max CI repair attempts before escalation'
+    value: ${{ steps.load.outputs.ci-repair-max-attempts }}
+  ci-repair-escalation-label:
+    description: 'Label applied when CI repair is escalated'
+    value: ${{ steps.load.outputs.ci-repair-escalation-label }}
+  narration-enabled:
+    description: 'Whether narration comments are enabled'
+    value: ${{ steps.load.outputs.narration-enabled }}
+  emojis-enabled:
+    description: 'Whether emoji prefixes are enabled'
+    value: ${{ steps.load.outputs.emojis-enabled }}
+  approval-implementation:
+    description: 'Whether implementation requires approval'
+    value: ${{ steps.load.outputs.approval-implementation }}
+  approval-plan:
+    description: 'Whether plans require approval'
+    value: ${{ steps.load.outputs.approval-plan }}
+  hook-pre-merge-enabled:
+    description: 'Whether the pre-merge validator hook is enabled'
+    value: ${{ steps.load.outputs.hook-pre-merge-enabled }}
+  hook-pre-merge-command:
+    description: 'Command to run as pre-merge validator'
+    value: ${{ steps.load.outputs.hook-pre-merge-command }}
+  hook-pre-merge-timeout:
+    description: 'Timeout in seconds for the pre-merge validator'
+    value: ${{ steps.load.outputs.hook-pre-merge-timeout }}
+  context-files:
+    description: 'Comma-separated list of context file paths'
+    value: ${{ steps.load.outputs.context-files }}
+  context-instructions:
+    description: 'Implementation context instructions string'
+    value: ${{ steps.load.outputs.context-instructions }}
+  scopes-json:
+    description: 'JSON array of declared scopes with name, label, folders, reviewer, max_concurrent'
+    value: ${{ steps.load.outputs.scopes-json }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        cd "${{ github.action_path }}"
+        npm install --production --silent 2>/dev/null || npm install js-yaml ajv --silent
+
+    - name: Load config
+      id: load
+      shell: bash
+      run: |
+        node -e "
+        const { loadConfig, configToOutputs } = require('${{ github.action_path }}/load-config.js');
+        const { config, warnings } = loadConfig({ repoRoot: process.env.GITHUB_WORKSPACE || '.' });
+        for (const w of warnings) {
+          console.log('::warning::' + w);
+        }
+        const outputs = configToOutputs(config);
+        const fs = require('fs');
+        const outputFile = process.env.GITHUB_OUTPUT || '/dev/null';
+        let lines = '';
+        for (const [key, value] of Object.entries(outputs)) {
+          lines += key + '=' + value + '\n';
+        }
+        fs.appendFileSync(outputFile, lines);
+        console.log('Factory config loaded successfully');
+        "

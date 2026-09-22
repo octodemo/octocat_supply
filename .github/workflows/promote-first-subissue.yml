@@ -1,0 +1,70 @@
+# Factory: Promote first sub-issue
+#
+# Guardrail that fires after decompose completes (factory:decomposed applied).
+# Ensures at least one sub-issue has factory:ready. If the decompose agent
+# forgot to promote the first sub-issue, this step self-heals the pipeline.
+#
+# Runs once per decompose, event-driven, no cron.
+
+name: "Factory: Promote first sub-issue"
+
+on:
+  workflow_dispatch:
+    inputs:
+      intent_number:
+        description: "Intent issue number whose sub-issues to check"
+        required: true
+        type: string
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    # Every API call below runs on GH_AW_GITHUB_TOKEN, and nothing is checked
+    # out, so the ambient GITHUB_TOKEN needs no scopes at all.
+    permissions: {}
+    steps:
+      - name: Ensure first sub-issue has factory:ready
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          INTENT_NUMBER="${{ inputs.intent_number }}"
+
+          echo "Checking sub-issues of intent #$INTENT_NUMBER"
+
+          # If the intent has factory:needs-human, it's waiting for plan approval.
+          # Do NOT promote any sub-issue — the decision gate handles promotion after approval.
+          INTENT_LABELS=$(gh issue view "$INTENT_NUMBER" --repo "$REPO" --json labels --jq '[.labels[].name] | join(",")')
+          if echo "$INTENT_LABELS" | grep -q "factory:needs-human"; then
+            echo "Intent #$INTENT_NUMBER has factory:needs-human — waiting for plan approval, skipping promotion"
+            exit 0
+          fi
+
+          # Get all open issues with factory:ready label
+          READY_COUNT=$(gh issue list --repo "$REPO" --label "factory:ready" --state open --json number --jq 'length')
+
+          if [ "$READY_COUNT" -gt 0 ]; then
+            echo "Found $READY_COUNT issue(s) with factory:ready — no action needed"
+            exit 0
+          fi
+
+          echo "No issues have factory:ready — finding first sub-issue to promote"
+
+          # Get all open issues with factory:blocked, sorted by number (oldest first).
+          # IMPORTANT: Exclude the parent intent itself — only promote actual sub-issues.
+          # Sub-issues are identified by having a fenced factory YAML block with "parent:" in the body.
+          FIRST_BLOCKED=$(gh issue list --repo "$REPO" --label "factory:blocked" --state open --json number,body \
+            --jq "sort_by(.number) | map(select(.number != $INTENT_NUMBER and (.body | contains(\"parent: $INTENT_NUMBER\")))) | .[0].number // empty")
+
+          if [ -z "$FIRST_BLOCKED" ]; then
+            echo "No blocked sub-issues found for intent #$INTENT_NUMBER — nothing to promote"
+            exit 0
+          fi
+
+          echo "Promoting issue #$FIRST_BLOCKED to factory:ready"
+
+          # Remove factory:blocked, add factory:ready
+          gh api "repos/$REPO/issues/$FIRST_BLOCKED/labels/factory:blocked" -X DELETE 2>/dev/null || true
+          gh api "repos/$REPO/issues/$FIRST_BLOCKED/labels" -f "labels[]=factory:ready" --silent
+
+          echo "✅ Promoted issue #$FIRST_BLOCKED to factory:ready"

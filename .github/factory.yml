@@ -1,0 +1,50 @@
+factory:
+  version: 1
+  labels:
+    prefix: "factory"
+  branches:
+    pattern: "factory/issue-{number}"
+  features:
+    narration:
+      enabled: true
+      style: "append"
+    emojis:
+      enabled: true
+    screenshots:
+      enabled: false
+  merge:
+    enabled: true
+    method: "squash"
+    require_human_review: false
+    auto_merge_on_green: false
+    delete_branch: true
+  approval:
+    implementation:
+      require_approval: false
+    plan:
+      require_approval: false
+  ci_repair:
+    max_attempts: 2
+    escalation:
+      after_attempts: 2
+      action: "label"
+      label: "factory:needs-human"
+  context:
+    files: []
+    instructions: ""
+  # Shell access is denied to every agentic workflow by default. Grant it
+  # per workflow, never globally, so that arming `test` with `npm test` does
+  # not also hand a shell to `decompose`. Commands listed here are injected
+  # into the workflow's gh-aw `tools.bash` frontmatter at compile time.
+  #
+  #   tools:
+  #     bash:
+  #       test: ["npm test", "npm run lint"]
+  tools:
+    bash: {}
+  hooks:
+    pre_merge:
+      enabled: false
+      command: ""
+      timeout: 120
+  scopes: []

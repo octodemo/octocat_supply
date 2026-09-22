@@ -1,0 +1,17 @@
+name: Copilot setup steps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    # Checkout runs on GH_AW_GITHUB_TOKEN (see below), so the ambient
+    # GITHUB_TOKEN needs no scopes.
+    permissions: {}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Required: orgs with default_repository_permission "none" don't grant
+          # the agent's infrastructure token read access to the repo.
+          token: ${{ secrets.GH_AW_GITHUB_TOKEN }}

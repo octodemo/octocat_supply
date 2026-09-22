@@ -1,0 +1,124 @@
+name: Compile Workflows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/*.md"
+      # factory.yml carries the tools.bash allowlist, which is injected into
+      # the frontmatter at compile time. Without this path a grant would be
+      # written to config and never reach any .lock.yml — configured, and
+      # silently inert.
+      - ".github/factory.yml"
+
+concurrency:
+  group: factory-workflow-compilation
+  cancel-in-progress: false
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+
+      - name: Install gh-aw
+        shell: bash
+        run: |
+          set -euo pipefail
+          GH_AW_VERSION="$(tr -d '[:space:]' < .github/config/gh-aw-version.txt)"
+          gh extension install github/gh-aw --force --pin "$GH_AW_VERSION"
+          ACTUAL_VERSION="$(gh aw --version 2>&1 | tr -d '\r' | awk '{print $NF}')"
+          test "${ACTUAL_VERSION#v}" = "${GH_AW_VERSION#v}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Sync latest main
+        run: git pull --ff-only origin main
+
+      # Grant configured shell access (see factory.yml `tools.bash`) just long
+      # enough for the compiler to bake it into the .lock.yml, then put the .md
+      # sources back. The lock files are generated output and are meant to carry
+      # the grant; the .md files are checksummed in factory.lock, so leaving them
+      # rewritten would register as drift and break `gh factory upgrade`.
+      - name: Apply configured shell allowlist
+        shell: bash
+        run: |
+          (cd .github/actions/load-config && \
+            npm install --production --silent 2>/dev/null || npm install js-yaml ajv --silent)
+          node -e "
+          const { loadConfig } = require('./.github/actions/load-config/load-config.js');
+          const { applyBashTools } = require('./.github/actions/load-config/apply-bash-tools.js');
+          const { config } = loadConfig({ repoRoot: '.' });
+          applyBashTools({ repoRoot: '.', config });
+          "
+
+      - name: Capture managed lock inventory
+        shell: bash
+        run: |
+          node -e "
+          const fs = require('fs');
+          const lock = JSON.parse(fs.readFileSync('.github/factory.lock', 'utf8'));
+          for (const [path, entry] of Object.entries(lock.files || {})) {
+            if (entry.source !== 'compiled') continue;
+            const source = entry.source_path || path.replace(/\\.lock\\.yml$/, '.md');
+            if (lock.files[source]?.source === 'template') console.log(path);
+          }
+          " | sort -u > "$RUNNER_TEMP/factory-locks-before"
+
+      - name: Compile workflow sources
+        run: gh aw compile --strict
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Restore workflow sources
+        if: always()
+        shell: bash
+        run: git checkout -- ':(glob).github/workflows/*.md' 2>/dev/null || true
+
+      - name: Verify and record compiled locks
+        shell: bash
+        run: |
+          set -euo pipefail
+          GH_AW_COMPILER_VERSION="$(gh aw --version 2>&1)" node -e "
+          const { recordCompiledLocks } = require('./.github/actions/load-config/record-compiled-locks.js');
+          recordCompiledLocks({
+            repoRoot: '.',
+            compilerVersion: process.env.GH_AW_COMPILER_VERSION,
+          });
+          "
+          node -e "
+          const fs = require('fs');
+          const lock = JSON.parse(fs.readFileSync('.github/factory.lock', 'utf8'));
+          for (const [path, entry] of Object.entries(lock.files || {})) {
+            if (entry.source === 'compiled') console.log(path);
+          }
+          " | sort -u > "$RUNNER_TEMP/factory-locks-after"
+          comm -23 "$RUNNER_TEMP/factory-locks-before" "$RUNNER_TEMP/factory-locks-after" |
+            while IFS= read -r path; do rm -f -- "$path"; done
+
+      - name: Commit and push compiled locks
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add .github/factory.lock
+          cat "$RUNNER_TEMP/factory-locks-before" "$RUNNER_TEMP/factory-locks-after" |
+            sort -u |
+            while IFS= read -r path; do git add -A -- "$path"; done
+          if ! git diff --cached --quiet; then
+            git config user.name "factory-bot"
+            git config user.email "factory-bot@users.noreply.github.com"
+            git commit -m "chore: compile agentic workflows
+
+          Auto-generated .lock.yml files from workflow sources.
+          Triggered by: ${{ github.actor }}"
+            git push
+            echo "✅ Compiled workflows committed."
+          else
+            echo "✅ No changes — lock files are up to date."
+          fi

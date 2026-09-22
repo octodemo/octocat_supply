@@ -1,0 +1,164 @@
+# Factory: Finalize decompose (non-agentic backstop)
+#
+# Fires once after the "Factory decompose" workflow completes. Performs the
+# deterministic end-state transition that the decompose AGENT no longer does,
+# so a decompose run that stops early can never wedge the pipeline silently.
+#
+# Outcomes:
+#   - complete + no plan approval  -> add factory:decomposed, remove factory:decomposing
+#       (this triggers the router -> promote-first-subissue -> factory:ready -> implement chain)
+#   - complete + plan approval     -> add factory:decomposed + factory:needs-human, comment
+#   - incomplete (children < planned "total", or none) -> close the partial
+#       children (never delete), comment, and re-fire decompose by re-applying
+#       factory:intent. After MAX_DECOMPOSE_RETRIES attempts, escalate with
+#       factory:needs-human instead.
+#
+# Event-driven, no cron, one run per decompose (1:1). No compilation required
+# (plain workflow, like promote-first-subissue.yml).
+
+name: "Factory: Finalize decompose"
+
+on:
+  workflow_run:
+    workflows: ["Factory decompose"]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: "factory-finalize-decompose-${{ github.repository }}"
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (to read .github/factory.yml)
+        uses: actions/checkout@v4
+
+      - name: Finalize or escalate decomposition
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          # Automatic recovery attempts before a human is asked to intervene.
+          MAX_DECOMPOSE_RETRIES: "1"
+        run: |
+          set -euo pipefail
+
+          CONFIG=".github/factory.yml"
+
+          # --- read plan-approval from factory.yml (lightweight parse) ---
+          REQUIRE_APPROVAL="false"
+          if [ -f "$CONFIG" ]; then
+            R=$(awk '
+              /^[[:space:]]*plan:[[:space:]]*$/ { inplan=1; next }
+              inplan && /require_approval:/ {
+                sub(/.*require_approval:[[:space:]]*/, ""); gsub(/["'"'"' ]/, ""); print; exit
+              }
+              inplan && /^[[:space:]]*[A-Za-z_]+:/ { inplan=0 }
+            ' "$CONFIG" || true)
+            [ -n "$R" ] && REQUIRE_APPROVAL="$R"
+          fi
+          echo "require_approval=$REQUIRE_APPROVAL"
+
+          # --- find intents still holding the in-flight lock ---
+          INTENTS=$(gh issue list --repo "$REPO" --label "factory:decomposing" --state open \
+            --json number --jq '.[].number' || true)
+          if [ -z "$INTENTS" ]; then
+            echo "No intents labeled factory:decomposing — nothing to finalize."
+            exit 0
+          fi
+
+          for N in $INTENTS; do
+            echo "::group::Finalizing intent #$N"
+
+            LABELS=$(gh issue view "$N" --repo "$REPO" --json labels --jq '[.labels[].name] | join(",")')
+
+            # Already finalized (defensive) — clear the stale lock and move on.
+            if echo "$LABELS" | grep -q "factory:decomposed"; then
+              echo "#$N already has factory:decomposed — clearing stale factory:decomposing."
+              gh api "repos/$REPO/issues/$N/labels/factory:decomposing" -X DELETE >/dev/null 2>&1 || true
+              echo "::endgroup::"
+              continue
+            fi
+
+            # Gather this parent's children (all still factory:blocked at this point).
+            CHILD_JSON=$(gh issue list --repo "$REPO" --label "factory:blocked" --state open \
+              --json number,body \
+              --jq "map(select(.number != $N and (.body | contains(\"parent: $N\"))))")
+            COUNT=$(echo "$CHILD_JSON" | jq 'length')
+
+            # Planned total is declared in each child's fenced factory YAML block.
+            TOTAL=$(echo "$CHILD_JSON" | jq -r '.[0].body // ""' \
+              | grep -E '^[[:space:]]*total:' | head -1 | sed -E 's/.*total:[[:space:]]*//' | tr -d '"'"'"' ' || true)
+            echo "children=$COUNT planned_total=${TOTAL:-unknown}"
+
+            INCOMPLETE=false
+            if [ "$COUNT" -eq 0 ] || ! echo "${TOTAL:-}" | grep -qE '^[0-9]+$'; then
+              INCOMPLETE=true
+            elif [ "$COUNT" -lt "$TOTAL" ]; then
+              INCOMPLETE=true
+            fi
+
+            if [ "$INCOMPLETE" = "true" ]; then
+              # Autonomous recovery: a decompose run that stops early is retried
+              # once, event-driven (no cron), before any human is involved.
+              # The retry budget is derived from prior retry comments on the
+              # issue itself, so no extra label or external state is needed.
+              RETRIES=$(gh issue view "$N" --repo "$REPO" --json comments \
+                --jq '[.comments[] | select(.body | contains("<!-- factory:decompose-retry -->"))] | length' 2>/dev/null || echo 0)
+              echo "Decomposition INCOMPLETE for #$N (retries so far: ${RETRIES:-0})."
+
+              if [ "${RETRIES:-0}" -lt "$MAX_DECOMPOSE_RETRIES" ]; then
+                # Close (never delete) the partial children so the retry starts clean.
+                for C in $(echo "$CHILD_JSON" | jq -r '.[].number'); do
+                  echo "Closing partial child #$C"
+                  gh issue close "$C" --repo "$REPO" --reason "not planned" \
+                    --comment "Superseded: the decompose run that created this issue stopped early. Factory is decomposing the parent again." >/dev/null 2>&1 || true
+                done
+
+                BODY=$(printf '<!-- factory:decompose-retry -->\n🔁 **Decomposition incomplete — retrying automatically.** The decompose step created **%s** child issue(s) but the plan declared **total: %s**.\n\nThe partial children have been closed (not deleted) and decomposition is being re-run. No action needed.' "$COUNT" "${TOTAL:-unknown}")
+                gh issue comment "$N" --repo "$REPO" --body "$BODY"
+
+                # Re-fire the router by re-applying the trigger label. The
+                # factory:decomposing lock is cleared first so decompose is eligible.
+                gh api "repos/$REPO/issues/$N/labels/factory:decomposing" -X DELETE >/dev/null 2>&1 || true
+                gh api "repos/$REPO/issues/$N/labels/factory:intent" -X DELETE >/dev/null 2>&1 || true
+                sleep 3
+                gh api "repos/$REPO/issues/$N/labels" -f "labels[]=factory:intent" --silent
+                echo "Retry dispatched for #$N."
+                echo "::endgroup::"
+                continue
+              fi
+
+              echo "Retry budget exhausted for #$N — escalating factory:needs-human."
+              gh api "repos/$REPO/issues/$N/labels" -f "labels[]=factory:needs-human" --silent
+              gh api "repos/$REPO/issues/$N/labels/factory:decomposing" -X DELETE >/dev/null 2>&1 || true
+              BODY=$(printf '🛑 **Decomposition incomplete after %s automatic retry attempt(s).** The last decompose run created **%s** child issue(s) but the plan declared **total: %s**.\n\nThis intent has been labeled `factory:needs-human` and the `factory:decomposing` lock was cleared so decompose can be re-run.\n\n**To recover:** close the partial child issues above, then re-apply `factory:intent` (or re-run the Factory decompose workflow) to decompose again cleanly.' "${RETRIES:-0}" "$COUNT" "${TOTAL:-unknown}")
+              gh issue comment "$N" --repo "$REPO" --body "$BODY"
+              echo "::endgroup::"
+              continue
+            fi
+
+            # Complete. Perform the deterministic state transition.
+            echo "Decomposition COMPLETE for #$N (${COUNT}/${TOTAL})."
+
+            if [ "$REQUIRE_APPROVAL" = "true" ]; then
+              # Apply the hold BEFORE factory:decomposed so that when the router
+              # dispatches promote-first-subissue, it already sees needs-human and
+              # skips promotion (no race).
+              echo "Plan approval required — adding factory:needs-human (promotion held)."
+              gh api "repos/$REPO/issues/$N/labels" -f "labels[]=factory:needs-human" --silent
+              gh api "repos/$REPO/issues/$N/labels" -f "labels[]=factory:decomposed" --silent
+              gh api "repos/$REPO/issues/$N/labels/factory:decomposing" -X DELETE >/dev/null 2>&1 || true
+              BODY=$(printf '📋 **Plan approval required.** Decomposition is complete (%s child issues) but `approval.plan.require_approval` is `true`, so execution is paused.\n\nReview the child issues, then apply `factory:resume` to approve and start execution.' "$COUNT")
+              gh issue comment "$N" --repo "$REPO" --body "$BODY"
+            else
+              echo "Autonomous — adding factory:decomposed (router promotes the first child), then clearing lock."
+              gh api "repos/$REPO/issues/$N/labels" -f "labels[]=factory:decomposed" --silent
+              gh api "repos/$REPO/issues/$N/labels/factory:decomposing" -X DELETE >/dev/null 2>&1 || true
+            fi
+            echo "::endgroup::"
+          done

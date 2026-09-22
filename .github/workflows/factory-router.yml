@@ -1,0 +1,96 @@
+# Factory: Event Router
+#
+# Single entry point for all label-triggered Factory workflows.
+# Instead of having multiple workflows all fire on issues:labeled (most
+# immediately skipping), this router checks the label and dispatches only
+# the relevant workflow via workflow_dispatch.
+#
+# This dramatically reduces no-op workflow runs cluttering the Actions tab.
+#
+# Label → Workflow mapping:
+#   factory:intent       → decompose.lock.yml
+#   factory:ready        → implement.yml
+#   factory:needs-human  → decision-gate.lock.yml
+#   factory:resume       → decision-gate.lock.yml
+#   factory:research     → research.lock.yml
+#   factory:decomposed   → promote-first-subissue.yml
+
+name: "Factory: Event Router"
+run-name: "Factory router: ${{ github.event.label.name }} on #${{ github.event.issue.number }}"
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      issues: write
+    steps:
+      # factory:blocked and factory:ready are contradictory: an issue cannot be
+      # waiting on a dependency and simultaneously be queued for work. The
+      # deterministic queue driver strips factory:blocked itself when it
+      # promotes (#154), but decision-gate, decompose and manual relabelling all
+      # apply factory:ready without passing through it. Asserting the invariant
+      # here covers those paths too, and costs one API call.
+      - name: Normalize contradictory lifecycle labels
+        if: github.event.label.name == 'factory:ready'
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # 404 simply means the label was not present, which is the goal state.
+          if gh api "repos/$REPO/issues/$ISSUE_NUMBER/labels/factory:blocked" \
+              -X DELETE --silent 2>/dev/null; then
+            echo "Removed stale factory:blocked from #$ISSUE_NUMBER."
+          else
+            echo "#$ISSUE_NUMBER did not carry factory:blocked."
+          fi
+
+      - name: Dispatch target workflow
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          LABEL: ${{ github.event.label.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          case "$LABEL" in
+            "factory:intent")
+              echo "Dispatching decompose for issue #$ISSUE_NUMBER"
+              gh workflow run decompose.lock.yml \
+                --repo "$REPO" \
+                -f issue_number="$ISSUE_NUMBER"
+              ;;
+            "factory:ready")
+              echo "Dispatching implement for issue #$ISSUE_NUMBER"
+              gh workflow run implement.yml \
+                --repo "$REPO" \
+                -f issue_number="$ISSUE_NUMBER" \
+                -f source="router"
+              ;;
+            "factory:needs-human"|"factory:resume")
+              echo "Dispatching decision-gate for issue #$ISSUE_NUMBER"
+              gh workflow run decision-gate.lock.yml \
+                --repo "$REPO" \
+                -f issue_number="$ISSUE_NUMBER"
+              ;;
+            "factory:research")
+              echo "Dispatching research for issue #$ISSUE_NUMBER"
+              gh workflow run research.lock.yml \
+                --repo "$REPO" \
+                -f issue_number="$ISSUE_NUMBER"
+              ;;
+            "factory:decomposed")
+              echo "Dispatching promote-first-subissue for issue #$ISSUE_NUMBER"
+              gh workflow run promote-first-subissue.yml \
+                --repo "$REPO" \
+                -f intent_number="$ISSUE_NUMBER"
+              ;;
+            *)
+              echo "Label '$LABEL' does not match any Factory workflow — no dispatch needed."
+              ;;
+          esac

@@ -1,0 +1,120 @@
+# Factory: Rework PR after review requests changes
+#
+# When the review agent applies `factory:changes-requested`, this workflow
+# posts a @copilot comment asking the coding agent to address the feedback.
+#
+# Guards:
+#   - PR must be authored by copilot[bot] OR have `factory:agent` label
+#   - Circuit breaker: max 3 rework attempts. After 3, escalates to human.
+#
+# Uses GH_AW_GITHUB_TOKEN (PAT) so the comment triggers the coding agent.
+
+name: "Factory: Rework PR"
+
+on:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: agent-pr-rework-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  rework:
+    if: github.event.label.name == 'factory:changes-requested'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check if PR is agent-authored
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          REPO="${{ github.repository }}"
+
+          # Check 1: Is the PR author copilot[bot]?
+          if [ "$PR_AUTHOR" = "copilot[bot]" ] || [ "$PR_AUTHOR" = "Copilot" ]; then
+            echo "is_agent=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Check 2: Does the PR have the factory:agent label?
+          HAS_LABEL=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
+            --json labels --jq '[.labels[].name] | any(. == "factory:agent")')
+
+          if [ "$HAS_LABEL" = "true" ]; then
+            echo "is_agent=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "PR #$PR_NUMBER is not agent-authored — skipping rework"
+          echo "is_agent=false" >> "$GITHUB_OUTPUT"
+
+      - name: Count previous rework attempts
+        if: steps.check.outputs.is_agent == 'true'
+        id: count
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          REPO="${{ github.repository }}"
+
+          # Count comments containing the rework marker
+          ATTEMPTS=$(gh api \
+            "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --paginate \
+            --jq '[.[] | select(.body | contains("<!-- factory-rework-attempt -->"))] | length')
+
+          echo "Previous rework attempts: $ATTEMPTS"
+          echo "attempts=$ATTEMPTS" >> "$GITHUB_OUTPUT"
+
+      - name: Escalate if max attempts exceeded
+        if: steps.check.outputs.is_agent == 'true' && steps.count.outputs.attempts >= 3
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          REPO="${{ github.repository }}"
+
+          # Apply needs-human label
+          gh pr edit "$PR_NUMBER" --repo "$REPO" \
+            --add-label "factory:needs-human"
+
+          # Post escalation comment
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+            "## ⚠️ Factory: Rework limit reached
+
+          The coding agent has attempted to address review feedback **3 times** without resolving the requested changes.
+
+          **Human intervention required.** Please review the PR, provide more specific guidance, or complete the changes manually.
+
+          Once resolved, remove the \`factory:needs-human\` label to allow the pipeline to continue.
+
+          <!-- factory-escalation -->"
+
+          echo "Escalated PR #$PR_NUMBER after 3 failed rework attempts"
+
+      - name: Post rework comment to coding agent
+        if: steps.check.outputs.is_agent == 'true' && steps.count.outputs.attempts < 3
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ATTEMPT: ${{ steps.count.outputs.attempts }}
+        run: |
+          REPO="${{ github.repository }}"
+          NEXT=$((ATTEMPT + 1))
+
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+            "<!-- factory-rework-attempt -->
+          @copilot The review agent has requested changes on this PR (attempt $NEXT/3). Please read the review comments above and push a fix that addresses all the feedback.
+
+          Focus on:
+          1. Reading each review comment carefully
+          2. Making the requested changes
+          3. Ensuring tests still pass after your changes"
+
+          echo "Posted rework comment (attempt $NEXT/3) on PR #$PR_NUMBER"

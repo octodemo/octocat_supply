@@ -1,0 +1,156 @@
+{
+  "schema_version": 2,
+  "factory_version": "v0.1.5",
+  "installed_at": "2026-09-22T18:20:33Z",
+  "installed_by": "gh-factory vv0.1.5",
+  "files": {
+    ".github/actions/load-config/action.yml": {
+      "checksum": "sha256:3e930fa3ee094b0cad8d6b729b4710c6b3e798ca32d670d0fee52b5f4f788538",
+      "source": "template"
+    },
+    ".github/actions/load-config/advance-queue.js": {
+      "checksum": "sha256:03982a55a831bbb9bd953b9e8c234d8abbac4f8da845d6dfbf1394d47ac801ca",
+      "source": "template"
+    },
+    ".github/actions/load-config/apply-bash-tools.js": {
+      "checksum": "sha256:9ebe071eb03ecd9c4bc5101c0a15f3a62125025ffa980eca16fb1d07819b0bd8",
+      "source": "template"
+    },
+    ".github/actions/load-config/factory-github.js": {
+      "checksum": "sha256:b215ed88cd56f837d0d74bc575b189aaac43d3b0c894dbb9badc287c28a18e20",
+      "source": "template"
+    },
+    ".github/actions/load-config/implement-issue.js": {
+      "checksum": "sha256:aadeeac4ef542a7912f38f13aa4e95166157fa02f87c6cc2f25cd091af5fa0cb",
+      "source": "template"
+    },
+    ".github/actions/load-config/load-config.js": {
+      "checksum": "sha256:7215243d85a587b735886e3cab3ef2ab9be244711f7c8cd22d56ede1b9e3d64b",
+      "source": "template"
+    },
+    ".github/actions/load-config/package-lock.json": {
+      "checksum": "sha256:b2f3c84022916b1c404d8812e02f76a2079a17a298b1e863d5f513798c8068be",
+      "source": "template"
+    },
+    ".github/actions/load-config/package.json": {
+      "checksum": "sha256:0284250e309f8186ea1bfd2b7248d0063e9dc17c03eda279cec4a4e1db0ae765",
+      "source": "template"
+    },
+    ".github/actions/load-config/record-compiled-locks.js": {
+      "checksum": "sha256:2fc0b0b285d5ce9ac48ca8e5ab2062c8bf2bf938440cb7821c3ab7d65961611d",
+      "source": "template"
+    },
+    ".github/actions/load-config/scope-advance.js": {
+      "checksum": "sha256:59c8f679997b9205b2fe201a66cbebd230d8cd46b06e2580c16900aa71733d0d",
+      "source": "template"
+    },
+    ".github/config/actions-lock.json": {
+      "checksum": "sha256:4a34724d33c5c98e137d7f7fa1c67a4dad031cff23f403ce57bed10dad55059f",
+      "source": "template"
+    },
+    ".github/config/factory.schema.json": {
+      "checksum": "sha256:56d0cc30855efa6504fdab70e8d926c30af0ffb9cec37a0e78c7ded453595948",
+      "source": "template"
+    },
+    ".github/config/factory.yml": {
+      "checksum": "sha256:b1910d98336c99b637acde178910037a18efac8fcc982155f5d50d762f2f073d",
+      "source": "template"
+    },
+    ".github/config/gh-aw-version.txt": {
+      "checksum": "sha256:df5de7ac7551d89b5d7238808efac8d9bc9e58abbd57d8edb48c1fa1c5da7ee1",
+      "source": "template"
+    },
+    ".github/copilot-instructions.md": {
+      "checksum": "sha256:da50b21b6a05368bada795b88ff7393263ccd6cdf0b07781b51b88b6b2334fe6",
+      "source": "generated"
+    },
+    ".github/factory.yml": {
+      "checksum": "sha256:b1910d98336c99b637acde178910037a18efac8fcc982155f5d50d762f2f073d",
+      "source": "generated"
+    },
+    ".github/workflows/advance.yml": {
+      "checksum": "sha256:442577f8582681c0b386c3679d60b63c542b183bc1716aed65065317a197ba09",
+      "source": "template"
+    },
+    ".github/workflows/agent-pr-merge.yml": {
+      "checksum": "sha256:1eebd63e510be2075f8f4c9f8080e510a4bef1e27a6ab310cedbb158bc5677ea",
+      "source": "template"
+    },
+    ".github/workflows/agent-pr-re-review.yml": {
+      "checksum": "sha256:c4c3948ba3f2179a17227f32d6733509032367638b9e88a1c22578b7508f90e5",
+      "source": "template"
+    },
+    ".github/workflows/agent-pr-ready.yml": {
+      "checksum": "sha256:c5ffce16f24496178cf90aee25a143dde3005051f31e94bac275b525c15bbed9",
+      "source": "template"
+    },
+    ".github/workflows/agent-pr-rework.yml": {
+      "checksum": "sha256:6d51bfcbbd4b0088bfdf5b6753861729c756672a5bee4a26bdc0e1597cb85c75",
+      "source": "template"
+    },
+    ".github/workflows/ci.yml": {
+      "checksum": "sha256:d2542311909434a93b9df186de1b9b756c183aa0d80973df7e7c842d511b097c",
+      "source": "template"
+    },
+    ".github/workflows/compile-workflows.yml": {
+      "checksum": "sha256:1025ef9ca4c2dba177ddbb3f03483dc4c685a7b16dc9f2983f4437cc698cbfe6",
+      "source": "template"
+    },
+    ".github/workflows/copilot-setup-steps.yml": {
+      "checksum": "sha256:0763c03489aa7ae42876708b86905c368ce3c74ed041928b1c8b6966a533449b",
+      "source": "template"
+    },
+    ".github/workflows/cross-scope-sync.md": {
+      "checksum": "sha256:74d0ed5b45ea739f45558507db06bf6758962a832a1a23fed5c84f8c7dc8a988",
+      "source": "template"
+    },
+    ".github/workflows/decision-gate.md": {
+      "checksum": "sha256:69e21c7109c76f07db392faaf8701fdc24487baff28c143ccd795eebc5359592",
+      "source": "template"
+    },
+    ".github/workflows/decompose.md": {
+      "checksum": "sha256:da48322f8d681d4cb630f245d2a1778d90ddcf6b9a1a024b0246646bd38ada2f",
+      "source": "template"
+    },
+    ".github/workflows/factory-bootstrap.yml": {
+      "checksum": "sha256:c1384d5294761c0b7d538f25adcfc1e7641d263b5a16882c74c9aca5f76e9849",
+      "source": "template"
+    },
+    ".github/workflows/factory-complete.yml": {
+      "checksum": "sha256:2f4295706567c50e1f58b796c0db63613528086bb7cf91cc5809dae431ba8933",
+      "source": "template"
+    },
+    ".github/workflows/factory-router.yml": {
+      "checksum": "sha256:6b3aa5c53871c7137d742613ee92f4d2655a6e7b7bf227b47ed68fe2847a185a",
+      "source": "template"
+    },
+    ".github/workflows/failure-handling.md": {
+      "checksum": "sha256:180fa2d634d409af8ec5f1364c78fa345fabd763ff642077dbee842c1ec01bb6",
+      "source": "template"
+    },
+    ".github/workflows/finalize-decompose.yml": {
+      "checksum": "sha256:ab25630d7deb6cd8cd05aea802835f417f137fea3051e4d33c71933de29783b6",
+      "source": "template"
+    },
+    ".github/workflows/implement.yml": {
+      "checksum": "sha256:d65422e5d93e7736760333bae3a6078d6d53920f31f39ce689313bcebe3b0b4a",
+      "source": "template"
+    },
+    ".github/workflows/promote-first-subissue.yml": {
+      "checksum": "sha256:93cdc6779c6ca1bc3f9e909f93f0b0addb679c96759c0ce7dbde734aa670f0cb",
+      "source": "template"
+    },
+    ".github/workflows/research.md": {
+      "checksum": "sha256:1dade691fb81891f47853e07e8912d17c76d4e15c36646ca9f0ea8ce456b3a82",
+      "source": "template"
+    },
+    ".github/workflows/review.md": {
+      "checksum": "sha256:e850acfbe7386b9be9a5ef8385da950c44363ea72c865433efbc4a6c369937be",
+      "source": "template"
+    },
+    ".github/workflows/test.md": {
+      "checksum": "sha256:589c8bed178841a7504b908623f278af1688cb21c258d69c655c880157962e7b",
+      "source": "template"
+    }
+  }
+}

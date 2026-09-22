@@ -1,0 +1,135 @@
+name: Factory Setup
+run-name: "Factory activation"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: factory-workflow-compilation
+  cancel-in-progress: false
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+
+      - name: Sync latest main
+        run: git pull --ff-only origin main
+
+      - name: Load Factory config
+        uses: ./.github/actions/load-config
+
+      - name: Install pinned gh-aw
+        shell: bash
+        run: |
+          set -euo pipefail
+          GH_AW_VERSION="$(tr -d '[:space:]' < .github/config/gh-aw-version.txt)"
+          gh extension install github/gh-aw --force --pin "$GH_AW_VERSION"
+          ACTUAL_VERSION="$(gh aw --version 2>&1 | tr -d '\r' | awk '{print $NF}')"
+          test "${ACTUAL_VERSION#v}" = "${GH_AW_VERSION#v}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Apply configured shell allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd .github/actions/load-config && npm ci --omit=dev --silent)
+          node -e "
+          const { loadConfig } = require('./.github/actions/load-config/load-config.js');
+          const { applyBashTools } = require('./.github/actions/load-config/apply-bash-tools.js');
+          const { config } = loadConfig({ repoRoot: '.' });
+          applyBashTools({ repoRoot: '.', config });
+          "
+
+      - name: Capture managed lock inventory
+        shell: bash
+        run: |
+          node -e "
+          const fs = require('fs');
+          const lock = JSON.parse(fs.readFileSync('.github/factory.lock', 'utf8'));
+          for (const [path, entry] of Object.entries(lock.files || {})) {
+            if (entry.source !== 'compiled') continue;
+            const source = entry.source_path || path.replace(/\\.lock\\.yml$/, '.md');
+            if (lock.files[source]?.source === 'template') console.log(path);
+          }
+          " | sort -u > "$RUNNER_TEMP/factory-locks-before"
+
+      - name: Compile workflow lock files
+        run: gh aw compile --strict
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Restore workflow sources
+        if: always()
+        shell: bash
+        run: git checkout -- ':(glob).github/workflows/*.md'
+
+      - name: Verify exact compiled lock set
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "
+          const fs = require('fs');
+          const lock = JSON.parse(fs.readFileSync('.github/factory.lock', 'utf8'));
+          const sources = Object.entries(lock.files || {})
+            .filter(([path, entry]) => entry.source === 'template' && path.endsWith('.md'))
+            .map(([path]) => path);
+          for (const source of sources) {
+            const output = source.replace(/\\.md$/, '.lock.yml');
+            if (!fs.existsSync(output)) throw new Error('Missing managed compiled workflow ' + output);
+          }
+          console.log('Verified ' + sources.length + ' Factory-owned compiled workflows.');
+          "
+
+      - name: Record compiled lock checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          GH_AW_COMPILER_VERSION="$(gh aw --version 2>&1)" node -e "
+          const { recordCompiledLocks } = require('./.github/actions/load-config/record-compiled-locks.js');
+          const files = recordCompiledLocks({
+            repoRoot: '.',
+            compilerVersion: process.env.GH_AW_COMPILER_VERSION,
+          });
+          console.log('Recorded ' + files.length + ' compiled workflow checksums.');
+          "
+          node -e "
+          const fs = require('fs');
+          const lock = JSON.parse(fs.readFileSync('.github/factory.lock', 'utf8'));
+          for (const [path, entry] of Object.entries(lock.files || {})) {
+            if (entry.source === 'compiled') console.log(path);
+          }
+          " | sort -u > "$RUNNER_TEMP/factory-locks-after"
+          comm -23 "$RUNNER_TEMP/factory-locks-before" "$RUNNER_TEMP/factory-locks-after" |
+            while IFS= read -r path; do rm -f -- "$path"; done
+
+      - name: Commit compiled locks
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "factory[bot]"
+          git config user.email "factory[bot]@users.noreply.github.com"
+          git add .github/factory.lock
+          cat "$RUNNER_TEMP/factory-locks-before" "$RUNNER_TEMP/factory-locks-after" |
+            sort -u |
+            while IFS= read -r path; do git add -A -- "$path"; done
+          if git diff --cached --quiet; then
+            echo "Compiled locks are already current."
+          else
+            git commit -m "Activate Factory compiled workflows"
+            git push origin HEAD:main
+          fi
+
+      - name: Report Factory active
+        run: |
+          echo "Factory is active. All inference runs execute through gh-aw; legacy Squad assets, if present, remain inert."

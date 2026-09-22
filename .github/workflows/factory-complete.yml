@@ -1,0 +1,100 @@
+# Factory: Mark intent complete
+#
+# When a sub-issue is closed, check if ALL sub-issues for the parent intent
+# are now closed. If so, apply factory:completed to the intent issue.
+#
+# Detects parent by searching for the intent issue that the closed issue
+# references (via "Parent: #N" in the body or the decompose lineage YAML).
+
+name: "Factory: Mark intent complete"
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  check-completion:
+    if: contains(join(github.event.issue.labels.*.name, ','), 'factory:')
+    runs-on: ubuntu-latest
+    # Every API call below runs on GH_AW_GITHUB_TOKEN, and nothing is checked
+    # out, so the ambient GITHUB_TOKEN needs no scopes at all.
+    permissions: {}
+    steps:
+      - name: Check if all sub-issues are complete
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          CLOSED_ISSUE="${{ github.event.issue.number }}"
+          echo "Issue #$CLOSED_ISSUE was closed. Checking for parent intent..."
+
+          # Find the parent intent issue
+          # Strategy: look for factory:intent issues that are still open
+          INTENT_ISSUES=$(gh issue list --repo "$REPO" --label "factory:intent" --state open \
+            --json number,title --jq '.[].number')
+
+          if [ -z "$INTENT_ISSUES" ]; then
+            echo "No open intent issues found."
+            exit 0
+          fi
+
+          for INTENT in $INTENT_ISSUES; do
+            echo "Checking intent #$INTENT..."
+
+            # Children are resolved by lineage, not by "has any factory: label".
+            #
+            # The old filter matched every factory-labelled issue in the
+            # repository, so with two intents in flight neither could ever
+            # complete (each saw the other's open children), and completion of
+            # one would relabel the other's issues. --limit is explicit because
+            # the default of 30 silently truncates, which on a busy repo reads
+            # as "all children closed" and completes an intent early.
+            ALL_SUB_ISSUES=$(gh issue list --repo "$REPO" --state all --limit 500 \
+              --json number,labels,state,body \
+              --jq "[.[]
+                | select(.number != $INTENT)
+                | select([.labels[].name] | any(startswith(\"factory:\")))
+                | select((.body // \"\") | test(\"(^|\\n)[[:space:]]*parent:[[:space:]]*#?$INTENT[[:space:]]*($|\\n)\"))
+                | {number, labels, state}]")
+
+            TOTAL=$(echo "$ALL_SUB_ISSUES" | jq 'length')
+            CLOSED=$(echo "$ALL_SUB_ISSUES" | jq '[.[] | select(.state == "CLOSED")] | length')
+
+            echo "  Sub-issues: $CLOSED/$TOTAL closed"
+
+            if [ "$TOTAL" -gt 0 ] && [ "$TOTAL" -eq "$CLOSED" ]; then
+              echo "  🎉 All sub-issues complete! Labeling intent #$INTENT as factory:completed"
+
+              # Normalize any child still carrying an in-flight label (#144).
+              #
+              # The queue driver moves a closed child to factory:done as it promotes
+              # the next sibling. The last child has no next sibling, so advance
+              # completes the parent instead and nothing relabels it — leaving a
+              # successful run's terminal state indistinguishable from one whose
+              # last issue died mid-implementation, and making "every child is
+              # factory:done" unsafe as a completion invariant.
+              #
+              # Asserting it here is deterministic and idempotent, rather than
+              # depending on which workflow wins a race.
+              for STALE in $(echo "$ALL_SUB_ISSUES" | jq -r '.[]
+                | select([.labels[].name]
+                  | any(. == "factory:in-progress" or . == "factory:review" or . == "factory:merging"))
+                | .number'); do
+                echo "  Normalizing #$STALE to factory:done"
+
+                # Applied one at a time: `gh issue edit` fails as a unit, so
+                # removing a label the issue doesn't carry would also drop the
+                # add-label in the same command.
+                gh issue edit "$STALE" --repo "$REPO" --add-label "factory:done" \
+                  || echo "  Could not add factory:done to #$STALE"
+                for L in factory:in-progress factory:review factory:merging; do
+                  gh issue edit "$STALE" --repo "$REPO" --remove-label "$L" 2>/dev/null || true
+                done
+              done
+
+              gh issue edit "$INTENT" --repo "$REPO" --add-label "factory:completed"
+              echo "✅ Intent #$INTENT marked as factory:completed"
+            else
+              echo "  Not all sub-issues closed yet ($CLOSED/$TOTAL)"
+            fi
+          done

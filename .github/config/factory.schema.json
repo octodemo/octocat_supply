@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Factory Configuration",
+  "description": "Configuration schema for .github/factory.yml",
+  "type": "object",
+  "properties": {
+    "factory": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "enum": [1],
+          "description": "Schema version"
+        },
+        "labels": {
+          "type": "object",
+          "properties": {
+            "prefix": {
+              "type": "string",
+              "default": "factory",
+              "description": "Namespace prefix for all Factory labels"
+            }
+          },
+          "additionalProperties": false
+        },
+        "branches": {
+          "type": "object",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "default": "factory/issue-{number}",
+              "description": "Branch naming pattern. {number} is replaced with issue number."
+            }
+          },
+          "additionalProperties": false
+        },
+        "features": {
+          "type": "object",
+          "properties": {
+            "narration": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": true },
+                "style": { "type": "string", "enum": ["append", "replace"], "default": "append" }
+              },
+              "additionalProperties": false
+            },
+            "emojis": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": true }
+              },
+              "additionalProperties": false
+            },
+            "screenshots": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": false }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "merge": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "method": { "type": "string", "enum": ["squash", "merge", "rebase"], "default": "squash" },
+            "require_human_review": { "type": "boolean", "default": false },
+            "auto_merge_on_green": { "type": "boolean", "default": false },
+            "delete_branch": { "type": "boolean", "default": true }
+          },
+          "additionalProperties": false
+        },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "implementation": {
+              "type": "object",
+              "properties": {
+                "require_approval": { "type": "boolean", "default": false }
+              },
+              "additionalProperties": false
+            },
+            "plan": {
+              "type": "object",
+              "properties": {
+                "require_approval": { "type": "boolean", "default": false }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "ci_repair": {
+          "type": "object",
+          "properties": {
+            "max_attempts": { "type": "integer", "minimum": 1, "default": 2 },
+            "escalation": {
+              "type": "object",
+              "properties": {
+                "after_attempts": { "type": "integer", "minimum": 1, "default": 2 },
+                "action": { "type": "string", "enum": ["label", "comment", "none"], "default": "label" },
+                "label": { "type": "string", "default": "factory:needs-human" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "files": { "type": "array", "items": { "type": "string" }, "default": [] },
+            "instructions": { "type": "string", "default": "" }
+          },
+          "additionalProperties": false
+        },
+        "tools": {
+          "type": "object",
+          "description": "Opt-in tool grants for the agentic workflows. Deny-by-default.",
+          "properties": {
+            "bash": {
+              "type": "object",
+              "description": "Per-workflow shell command allowlist, keyed by workflow name (e.g. test, review, decompose). Commands are passed through to the gh-aw tools.bash frontmatter. Omitted workflows keep the deny-all default.",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "type": "string" },
+                "default": []
+              },
+              "default": {}
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "hooks": {
+          "type": "object",
+          "properties": {
+            "pre_merge": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean", "default": false },
+                "command": { "type": "string", "default": "" },
+                "timeout": { "type": "integer", "minimum": 1, "default": 120 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Unique identifier for the scope"
+              },
+              "label": {
+                "type": "string",
+                "description": "Human-readable label for the scope"
+              },
+              "folders": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Folders owned by this scope"
+              },
+              "reviewer": {
+                "type": "string",
+                "description": "GitHub username or team responsible for reviewing this scope"
+              },
+              "max_concurrent": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1,
+                "description": "Maximum concurrent implementation issues for this scope"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          },
+          "default": []
+        }
+      },
+      "required": ["version"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["factory"],
+  "additionalProperties": false
+}

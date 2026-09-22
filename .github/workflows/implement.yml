@@ -1,0 +1,57 @@
+# Factory: Implement
+#
+# Deterministic replacement for implement.md (#154), which was already only a
+# shim: move `factory:ready` to `factory:in-progress`, assign the coding agent,
+# post one comment. Zero judgment, and it cost 4-5 minutes of agent startup per
+# sub-issue.
+#
+# advance.yml assigns the agent as it promotes, so on the normal path this
+# workflow finds the work already done and exits. It exists for the promotion
+# paths that only apply the label: promote-first-subissue.yml, decision-gate
+# and decompose.
+
+name: "Factory: Implement"
+run-name: "Factory implement: #${{ inputs.issue_number || github.event.issue.number }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Factory child issue number"
+        required: true
+        type: string
+      source:
+        description: "Planner or gate that dispatched this run"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: "factory-implement-${{ inputs.issue_number }}"
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install driver dependencies
+        shell: bash
+        run: |
+          cd .github/actions/load-config
+          npm install --production --silent 2>/dev/null || npm install js-yaml ajv --silent
+
+      - name: Assign the coding agent
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          FACTORY_ISSUE_NUMBER: ${{ inputs.issue_number }}
+          FACTORY_SOURCE: ${{ inputs.source }}
+        run: node .github/actions/load-config/implement-issue.js

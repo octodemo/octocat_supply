@@ -1,0 +1,39 @@
+name: Mark Copilot PR Ready for Review
+
+on:
+  push:
+    branches:
+      - 'copilot/**'
+
+concurrency:
+  group: agent-pr-ready-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wait-and-ready:
+    if: github.actor == 'Copilot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Wait for inactivity (5 min)
+        run: sleep 300
+
+      - name: Mark PR ready and request Copilot Code Review
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+        run: |
+          PR=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --head "${{ github.ref_name }}" \
+            --state open \
+            --json number \
+            -q '.[0].number')
+          if [ -n "$PR" ]; then
+            gh pr edit "$PR" --repo "${{ github.repository }}" --add-label "factory:agent"
+            gh pr ready "$PR" --repo "${{ github.repository }}"
+            gh pr review "$PR" --repo "${{ github.repository }}" --request-review copilot || echo "Review request failed (may need org-level Copilot Code Review access)"
+          else
+            echo "No open PR found for branch ${{ github.ref_name }}, skipping."
+          fi

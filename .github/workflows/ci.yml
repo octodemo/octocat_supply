@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # This job only builds and tests; it never writes to the repo or PRs.
+    # It also executes agent-authored build/test scripts, so it must not carry
+    # a write-scoped token.
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node ecosystem (only if package.json exists)
+      - uses: actions/setup-node@v4
+        if: hashFiles('package.json') != ''
+        with:
+          node-version: 22
+      - run: npm ci
+        if: hashFiles('package-lock.json') != ''
+      - run: npm install
+        if: hashFiles('package.json') != '' && hashFiles('package-lock.json') == ''
+      - run: npm test
+        if: hashFiles('package.json') != ''
+
+      # Python ecosystem (only if requirements.txt or pyproject.toml exists)
+      - uses: actions/setup-python@v5
+        if: hashFiles('requirements.txt', 'pyproject.toml') != ''
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+        if: hashFiles('requirements.txt') != ''
+      - run: pip install -e ".[dev]"
+        if: hashFiles('pyproject.toml') != '' && hashFiles('requirements.txt') == ''
+      - run: python -m pytest
+        if: hashFiles('requirements.txt', 'pyproject.toml') != ''
+
+      # Go ecosystem (only if go.mod exists)
+      - uses: actions/setup-go@v5
+        if: hashFiles('go.mod') != ''
+        with:
+          go-version-file: go.mod
+      - run: go test ./...
+        if: hashFiles('go.mod') != ''
+
+      # Generic build script fallback
+      - name: Run build script if present
+        if: hashFiles('Makefile', 'build.sh') != ''
+        run: |
+          if [ -f Makefile ]; then make; fi
+          if [ -f build.sh ]; then chmod +x build.sh && ./build.sh; fi

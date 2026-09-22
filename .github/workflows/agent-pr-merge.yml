@@ -1,0 +1,219 @@
+# Factory: Merge on approved
+#
+# Standard GitHub Actions workflow (not gh-aw) that merges PRs after
+# the review workflow completes successfully and applies factory:approved.
+#
+# Triggered directly by the factory:approved label, and opportunistically by
+# workflow_run.
+#
+# The workflow_run trigger was originally the only one, on the grounds that the
+# review workflow applied labels with GITHUB_TOKEN and GITHUB_TOKEN events do
+# not trigger other workflows. That is no longer true: review.md sets
+# safe-outputs.github-token to GH_AW_GITHUB_TOKEN, a PAT, so its labels do
+# raise events.
+#
+# Relying on workflow_run alone meant a merge was only attempted when some
+# unrelated workflow happened to finish successfully, so an approved PR sat
+# mergeable for ~10 minutes waiting for an incidental trigger — around 50
+# minutes across a single end-to-end run (#148).
+#
+# workflow_run is kept because it also covers auto_merge_on_green mode, which
+# bypasses the review agent and merges as soon as CI passes.
+#
+# Uses GH_AW_GITHUB_TOKEN (PAT) so the merge push triggers downstream
+# workflows (advance.yml). GITHUB_TOKEN pushes don't trigger events.
+#
+# Reads .github/factory.yml for:
+#   merge.enabled        — kill switch; if false, workflow exits immediately
+#   merge.method         — squash (default), merge, or rebase
+#   merge.auto_merge_on_green — if true, merge on CI green without review
+#   merge.require_human_review — if true, require a human (non-bot) approval
+#   merge.delete_branch  — if true (default), delete branch after merge
+#   hooks.pre_merge      — optional command to run before merging
+
+name: "Factory: Merge on approved"
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_run:
+    workflows: ["Factory review", "Factory test", "CI"]
+    types: [completed]
+
+jobs:
+  merge:
+    # Only the approval label is worth waking this workflow for; every other
+    # label event exits here without doing any work.
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'factory:approved')
+    runs-on: ubuntu-latest
+    # The checkout below is the only GITHUB_TOKEN consumer; it just reads
+    # factory.yml. Merging and every other API call use GH_AW_GITHUB_TOKEN.
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout (for factory.yml)
+        uses: actions/checkout@v4
+
+      - name: Load factory config
+        id: config
+        uses: ./.github/actions/load-config
+
+      - name: Check if merge is enabled
+        if: steps.config.outputs.merge-enabled == 'false'
+        run: |
+          echo "merge.enabled is false — skipping"
+          exit 0
+
+      - name: Find PR and check merge eligibility
+        id: check
+        if: steps.config.outputs.merge-enabled != 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          AUTO_MERGE_ON_GREEN: ${{ steps.config.outputs.merge-auto-on-green }}
+          REQUIRE_HUMAN_REVIEW: ${{ steps.config.outputs.merge-require-human-review }}
+          TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name }}
+        run: |
+          REPO="${{ github.repository }}"
+
+          # Get PR from the completed workflow run
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          else
+            PR_NUMBER=$(gh api \
+              "repos/$REPO/actions/runs/${{ github.event.workflow_run.id }}" \
+              --jq '.pull_requests[0].number // empty')
+          fi
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR associated with this workflow run"
+            echo "should_merge=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+          # Check PR is still open and not draft
+          PR_STATE=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
+            --json state,isDraft --jq '"\(.state):\(.isDraft)"')
+
+          if [ "$PR_STATE" != "OPEN:false" ]; then
+            echo "PR #$PR_NUMBER is not open/ready (state: $PR_STATE)"
+            echo "should_merge=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Check if this is a factory-managed PR (agent label OR agent branch pattern)
+          HAS_AGENT=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
+            --json labels --jq '[.labels[].name] | any(. == "factory:agent")')
+
+          if [ "$HAS_AGENT" != "true" ]; then
+            # Fall back to branch pattern check
+            HEAD_BRANCH=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
+              --json headRefName --jq '.headRefName')
+
+            case "$HEAD_BRANCH" in
+              copilot/*|factory/issue-*)
+                echo "PR #$PR_NUMBER matches agent branch pattern ($HEAD_BRANCH)"
+                ;;
+              *)
+                echo "PR #$PR_NUMBER is not a factory-managed PR — skipping"
+                echo "should_merge=false" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+          fi
+
+          # Determine merge path:
+          # 1. If triggered by CI and auto_merge_on_green is true → merge
+          # 2. If triggered by review/test → require factory:approved label
+          if [ "$TRIGGER_WORKFLOW" = "CI" ]; then
+            if [ "$AUTO_MERGE_ON_GREEN" != "true" ]; then
+              echo "CI passed but auto_merge_on_green is not enabled"
+              echo "should_merge=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Auto-merging on green CI (auto_merge_on_green=true)"
+          else
+            # Standard path: require factory:approved label
+            HAS_APPROVED=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
+              --json labels --jq '[.labels[].name] | any(. == "factory:approved")')
+
+            if [ "$HAS_APPROVED" != "true" ]; then
+              echo "PR #$PR_NUMBER does not have factory:approved label"
+              echo "should_merge=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # If require_human_review is enabled, verify a non-bot APPROVED review exists
+          if [ "$REQUIRE_HUMAN_REVIEW" = "true" ]; then
+            HUMAN_APPROVAL=$(gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" \
+              --jq '[.[] | select(.state == "APPROVED") | select(.user.type != "Bot")] | length')
+
+            if [ "${HUMAN_APPROVAL:-0}" -lt 1 ]; then
+              echo "PR #$PR_NUMBER requires human review but has no non-bot approvals"
+              echo "should_merge=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Human review requirement satisfied ($HUMAN_APPROVAL approval(s))"
+          fi
+
+          echo "should_merge=true" >> "$GITHUB_OUTPUT"
+
+      - name: Run pre-merge hook
+        if: steps.check.outputs.should_merge == 'true' && steps.config.outputs.hook-pre-merge-enabled == 'true'
+        id: hook
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          HOOK_COMMAND: ${{ steps.config.outputs.hook-pre-merge-command }}
+          HOOK_TIMEOUT: ${{ steps.config.outputs.hook-pre-merge-timeout }}
+        run: |
+          if [ -z "$HOOK_COMMAND" ]; then
+            echo "Pre-merge hook enabled but no command configured — skipping"
+            exit 0
+          fi
+
+          echo "Running pre-merge hook: $HOOK_COMMAND (timeout: ${HOOK_TIMEOUT}s)"
+          if timeout "${HOOK_TIMEOUT}" bash -c "$HOOK_COMMAND"; then
+            echo "Pre-merge hook passed"
+            echo "hook_passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Pre-merge hook failed — blocking merge"
+            echo "hook_passed=false" >> "$GITHUB_OUTPUT"
+
+            # Escalate: apply factory:needs-human
+            REPO="${{ github.repository }}"
+            PR_NUMBER="${{ steps.check.outputs.pr_number }}"
+            gh pr comment "$PR_NUMBER" --repo "$REPO" \
+              --body "⚠️ **Pre-merge hook failed** — command \`$HOOK_COMMAND\` returned non-zero. Merge blocked until resolved."
+            gh api "repos/$REPO/issues/$PR_NUMBER/labels" \
+              --method POST --field "labels[]=factory:needs-human" || true
+          fi
+
+      - name: Merge PR
+        if: |
+          steps.check.outputs.should_merge == 'true' &&
+          (steps.config.outputs.hook-pre-merge-enabled != 'true' || steps.hook.outputs.hook_passed == 'true')
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          MERGE_METHOD: ${{ steps.config.outputs.merge-method }}
+          DELETE_BRANCH: ${{ steps.config.outputs.merge-delete-branch }}
+        run: |
+          METHOD="${MERGE_METHOD:-squash}"
+          # Validate method
+          case "$METHOD" in
+            squash|merge|rebase) ;;
+            *) echo "Invalid merge method '$METHOD', defaulting to squash"; METHOD="squash" ;;
+          esac
+
+          MERGE_ARGS="--$METHOD"
+          if [ "$DELETE_BRANCH" != "false" ]; then
+            MERGE_ARGS="$MERGE_ARGS --delete-branch"
+          fi
+
+          echo "Merging PR #${{ steps.check.outputs.pr_number }} (method: $METHOD, delete_branch: ${DELETE_BRANCH:-true})"
+          gh pr merge "${{ steps.check.outputs.pr_number }}" \
+            --repo "${{ github.repository }}" \
+            $MERGE_ARGS

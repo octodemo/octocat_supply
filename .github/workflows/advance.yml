@@ -1,0 +1,75 @@
+# Factory: Advance the build queue
+#
+# Deterministic replacement for advance.md and implement.md (#154).
+#
+# Choosing the next sibling is a parser and a comparator — read a YAML block,
+# check whether the issues it names are closed, take the lowest `order`, move
+# labels, assign the coding agent. There is no judgment in it. Expressed as a
+# prompt, the steps were requested rather than guaranteed: on 2026-07-28 the
+# agent promoting #54 added `factory:ready` and skipped removing
+# `factory:blocked`, leaving contradictory state.
+#
+# Decompose, review, test, research, ci-repair and decision-gate stay agentic.
+
+name: "Factory: Advance queue"
+run-name: "Factory advance: #${{ github.event.issue.number || inputs.issue_number }}"
+
+on:
+  issues:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Closed Factory child issue whose queue should advance"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  advance:
+    # A closure with no Factory label cannot advance anything, and skipping it
+    # here keeps unrelated issue activity out of the Actions tab entirely.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(join(github.event.issue.labels.*.name, ','), 'factory:')
+    runs-on: ubuntu-latest
+    concurrency:
+      # Keyed on the parent, never on the closed child, so that two scopes under
+      # one intent can advance independently. The parent is not known until the
+      # body is parsed, so the group is refined inside the driver's own
+      # serialization; this outer group prevents two closures in the same repo
+      # from promoting simultaneously.
+      group: factory-advance-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install queue driver dependencies
+        shell: bash
+        run: |
+          cd .github/actions/load-config
+          npm install --production --silent 2>/dev/null || npm install js-yaml ajv --silent
+
+      - name: Resolve the closed issue for a manual dispatch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh issue view "${{ inputs.issue_number }}" --repo "${{ github.repository }}" \
+            --json number,title,body,state,labels > /tmp/issue.json
+          jq '{issue: .}' /tmp/issue.json > /tmp/factory-event.json
+          echo "FACTORY_EVENT_PATH=/tmp/factory-event.json" >> "$GITHUB_ENV"
+
+      - name: Advance the queue
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node .github/actions/load-config/advance-queue.js

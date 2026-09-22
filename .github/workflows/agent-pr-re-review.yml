@@ -1,0 +1,97 @@
+# Factory: Re-review after coding agent pushes a fix
+#
+# When the coding agent pushes new commits to a PR that has
+# `factory:changes-requested`, this workflow clears that label so the PR is no
+# longer marked as awaiting a fix.
+#
+# It does not re-trigger the review itself. The header used to claim it did,
+# by "removing and re-adding a label" — but the code only ever removed one, so
+# re-review depended on some other workflow incidentally raising a `labeled`
+# event (#145). The review workflow now triggers on `synchronize` directly, so
+# the agent's own push is what starts the re-review.
+#
+# Uses GH_AW_GITHUB_TOKEN (PAT) for label operations.
+
+name: "Factory: Re-review after fix"
+
+on:
+  pull_request:
+    types: [synchronize]
+
+concurrency:
+  group: agent-pr-re-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  re-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Check eligibility for re-review
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          REPO="${{ github.repository }}"
+
+          # Must have factory:changes-requested label
+          HAS_CHANGES_REQUESTED=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
+            --json labels --jq '[.labels[].name] | any(. == "factory:changes-requested")')
+
+          if [ "$HAS_CHANGES_REQUESTED" != "true" ]; then
+            echo "PR #$PR_NUMBER does not have factory:changes-requested — skipping"
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Must be agent-authored (copilot[bot] author OR factory:agent label)
+          if [ "$PR_AUTHOR" = "copilot[bot]" ] || [ "$PR_AUTHOR" = "Copilot" ]; then
+            echo "eligible=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          HAS_AGENT_LABEL=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
+            --json labels --jq '[.labels[].name] | any(. == "factory:agent")')
+
+          if [ "$HAS_AGENT_LABEL" = "true" ]; then
+            echo "eligible=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "PR #$PR_NUMBER is not agent-authored — skipping"
+          echo "eligible=false" >> "$GITHUB_OUTPUT"
+
+      - name: Remove changes-requested and re-trigger review
+        if: steps.check.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          REPO="${{ github.repository }}"
+
+          # Remove the changes-requested label
+          gh pr edit "$PR_NUMBER" --repo "$REPO" \
+            --remove-label "factory:changes-requested"
+
+          echo "Removed factory:changes-requested from PR #$PR_NUMBER"
+
+          # Brief pause to ensure the unlabeled event is processed
+          sleep 2
+
+          # Re-trigger review by marking PR ready_for_review
+          # (review.lock.yml triggers on: pull_request[ready_for_review])
+          # If PR is already ready, this is a no-op via the API, so we use
+          # a label round-trip instead: add a label to fire the labeled event
+          gh pr edit "$PR_NUMBER" --repo "$REPO" \
+            --add-label "factory:re-review"
+
+          sleep 2
+
+          # Remove the transient label (cleanup)
+          gh pr edit "$PR_NUMBER" --repo "$REPO" \
+            --remove-label "factory:re-review"
+
+          echo "Re-triggered review for PR #$PR_NUMBER"

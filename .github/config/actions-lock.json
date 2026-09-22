@@ -1,0 +1,29 @@
+{
+  "entries": {
+    "actions/github-script@v9.0.0": {
+      "repo": "actions/github-script",
+      "version": "v9.0.0",
+      "sha": "3a2844b7e9c422d3c10d287c895573f7108da1b3"
+    },
+    "actions/setup-node@v4": {
+      "repo": "actions/setup-node",
+      "version": "v4",
+      "sha": "49933ea5288caeca8642d1e84afbd3f7d6820020"
+    },
+    "actions/setup-python@v5": {
+      "repo": "actions/setup-python",
+      "version": "v5",
+      "sha": "a26af69be951a213d495a4c3e4e4022e16d87065"
+    },
+    "github/gh-aw-actions/setup-cli@v0.79.8": {
+      "repo": "github/gh-aw-actions/setup-cli",
+      "version": "v0.79.8",
+      "sha": "c0338fef4749d08c21f8f975fb0e37efa17dda47"
+    },
+    "github/gh-aw-actions/setup@v0.79.8": {
+      "repo": "github/gh-aw-actions/setup",
+      "version": "v0.79.8",
+      "sha": "c0338fef4749d08c21f8f975fb0e37efa17dda47"
+    }
+  }
+}
