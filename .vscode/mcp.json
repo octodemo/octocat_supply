@@ -5,14 +5,39 @@
       "type": "promptString",
       "description": "GitHub Personal Access Token",
       "password": true
+    },
+    {
+      "id": "atlassian_url",
+      "type": "promptString",
+      "description": "Atlassian base URL (e.g. https://yourcompany.atlassian.net)"
+    },
+    {
+      "id": "atlassian_email",
+      "type": "promptString",
+      "description": "Atlassian account e-mail address"
+    },
+    {
+      "id": "atlassian_token",
+      "type": "promptString",
+      "description": "Atlassian API token",
+      "password": true
     }
   ],
   "servers": {
     "playwright": {
+      "type": "stdio",
       "command": "npx",
       "args": [
-        "@playwright/mcp@latest",
-        "--browser=msedge"
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
       ]
     },
     "github": {
@@ -44,6 +69,23 @@
         "server",
         "start"
       ]
+    },
+    "atlassian": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "-p",
+        "jsdom",
+        "-p",
+        "mcp-atlassian",
+        "mcp-atlassian"
+      ],
+      "env": {
+        "ATLASSIAN_BASE_URL": "${input:atlassian_url}",
+        "ATLASSIAN_EMAIL": "${input:atlassian_email}",
+        "ATLASSIAN_API_TOKEN": "${input:atlassian_token}"
+      }
     }
   }
 }

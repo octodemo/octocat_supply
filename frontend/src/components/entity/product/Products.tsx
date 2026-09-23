@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import WishlistButton from './WishlistButton';
 
 interface Product {
   productId: number;
@@ -205,6 +206,7 @@ export default function Products() {
                           ${product.price.toFixed(2)}
                         </span>
                       )}
+                      <WishlistButton productId={product.productId} />
                     </div>
 
                     <div className="flex items-center justify-between">

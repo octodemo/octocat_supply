@@ -24,6 +24,8 @@ The database consists of the following tables:
 - `order_details` - Order line items (linked to orders and products)
 - `deliveries` - Delivery tracking (linked to suppliers)
 - `order_detail_deliveries` - Junction table for order-delivery relationships
+- `wishlists` - Anonymous shareable wishlists, identified by a UUID `share_token`
+- `wishlist_items` - Products added to a wishlist (unique per wishlist+product)
 - `migrations` - Database schema version tracking
 
 ## Getting Started
