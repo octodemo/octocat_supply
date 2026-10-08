@@ -147,6 +147,18 @@ docker-up: ## Start Docker containers
 docker-down: ## Stop Docker containers
 	docker-compose down
 
+##@ Demo
+
+URL ?= http://localhost:3000
+
+.PHONY: demo-traffic
+demo-traffic: ## Send healthy order traffic (URL=https://<api-domain>)
+	cd $(API_DIR) && npm run traffic:dev -- --url $(URL)
+
+.PHONY: demo-incident
+demo-incident: ## Send order traffic that triggers the production incident (URL=https://<api-domain>)
+	cd $(API_DIR) && npm run traffic:dev -- --url $(URL) --incident
+
 ##@ Cleaning
 
 .PHONY: clean

@@ -1,3 +1,4 @@
+import './instrument';
 import express from 'express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
@@ -29,6 +30,8 @@ const corsOrigins = process.env.API_CORS_ORIGINS
       /^https:\/\/.*\.app\.github\.dev$/,
       // Allow all Azure Container Apps domains
       /^https:\/\/.*\.azurecontainerapps\.io$/,
+      // Allow all Railway domains
+      /^https:\/\/.*\.up\.railway\.app$/,
       // Allow private network IPs for local/LAN development (IPv4 octets 0–255)
       /^http:\/\/192\.168\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)(:\d+)?$/,
       /^http:\/\/10\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)(:\d+)?$/,

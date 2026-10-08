@@ -112,6 +112,7 @@ To showcase extended capabilities:
 
 - [Detailed Architecture](./docs/architecture.md)
 - [SQLite Integration](./docs/sqlite-integration.md)
+- [Production Alert Demo (Railway + Sentry)](./docs/production-alert-demo.md)
 
 Database defaults and env vars:
 
